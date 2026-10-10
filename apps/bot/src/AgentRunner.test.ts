@@ -80,3 +80,27 @@ test("non-allowlisted and non-mentions are ignored; crashes still revoke the tok
   expect(h.live.size).toBe(0);
   expect(h.chat.at(-1)).toContain("agent unavailable (wsl exploded)");
 });
+
+test("jobs from different requesters never overlap (one sandbox, one uid)", async () => {
+  let running = 0;
+  let maxRunning = 0;
+
+  const h = harness({
+    run: async () => {
+      running++;
+      maxRunning = Math.max(maxRunning, running);
+      await Bun.sleep(20);
+      running--;
+
+      return {
+        stdout: '{"type":"result","is_error":false,"result":"ok","session_id":"s"}',
+        exitCode: 0,
+      };
+    },
+  });
+
+  await Promise.all([h.agent("1", "Host", "@bot a"), h.agent("2", "Amy", "@bot b")]);
+
+  expect(maxRunning).toBe(1);
+  expect(h.chat.filter((l) => l === "ok").length).toBe(2);
+});

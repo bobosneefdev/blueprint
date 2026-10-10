@@ -78,6 +78,20 @@ export const sandboxed = (argv: string[], env: Record<string, string>) =>
 
 export const make = (deps: Deps) => {
   const queue = Agent.makeQueue();
+  // One sandbox, one Linux user: jobs must never overlap, or one requester's agent could read the
+  // next one's token from /proc. Every job (any requester) runs in arrival order on this chain.
+  let lane: Promise<void> = Promise.resolve();
+
+  const serial = <A>(job: () => Promise<A>) => {
+    const next = lane.then(job);
+
+    lane = next.then(
+      () => undefined,
+      () => undefined,
+    );
+
+    return next;
+  };
 
   const run = deps.run ?? spawnHarness;
 
@@ -94,40 +108,7 @@ export const make = (deps: Deps) => {
 
     try {
       await deps.chat(`${name}: on it…`);
-
-      if (process.platform === "win32") await deps.prepareSandbox();
-
-      const { kind, model } = deps.harness();
-      const { token, revoke } = deps.issueRpcToken(steamId);
-      const previous = deps.sessions.get(steamId);
-
-      const argv = Harness.argv({
-        kind,
-        prompt: `[${name}] ${prompt}`,
-        systemPrompt: Agent.systemPrompt(settings),
-        model,
-        session: previous,
-      });
-
-      const env = { BOT_RPC_URL: deps.rpcUrl, BOT_RPC_TOKEN: token };
-
-      const { stdout, exitCode } = await run(argv, env).finally(revoke);
-
-      const reply = Harness.parse(kind, stdout, exitCode);
-
-      if (reply.session !== undefined) deps.sessions.set(steamId, reply.session);
-
-      const id = randomUUID().slice(0, 8);
-
-      const body = reply.ok
-        ? reply.text
-        : `Something went wrong running ${kind}. Check the portal logs.`;
-
-      deps.replies.set(id, body);
-
-      const link = settings.portalUrl === undefined ? undefined : `${settings.portalUrl}/r/${id}`;
-
-      for (const line of Agent.chatLines(body, link)) await deps.chat(line);
+      await serial(() => job(steamId, name, prompt, settings));
     } catch (e) {
       console.error("agent run failed", e);
       await deps.chat(
@@ -137,4 +118,40 @@ export const make = (deps: Deps) => {
       queue.finish(steamId);
     }
   };
+
+  async function job(steamId: string, name: string, prompt: string, settings: Agent.Settings) {
+    if (process.platform === "win32") await deps.prepareSandbox();
+
+    const { kind, model } = deps.harness();
+    const { token, revoke } = deps.issueRpcToken(steamId);
+    const previous = deps.sessions.get(steamId);
+
+    const argv = Harness.argv({
+      kind,
+      prompt: `[${name}] ${prompt}`,
+      systemPrompt: Agent.systemPrompt(settings),
+      model,
+      session: previous,
+    });
+
+    const env = { BOT_RPC_URL: deps.rpcUrl, BOT_RPC_TOKEN: token };
+
+    const { stdout, exitCode } = await run(argv, env).finally(revoke);
+
+    const reply = Harness.parse(kind, stdout, exitCode);
+
+    if (reply.session !== undefined) deps.sessions.set(steamId, reply.session);
+
+    const id = randomUUID().slice(0, 8);
+
+    const body = reply.ok
+      ? reply.text
+      : `Something went wrong running ${kind}. Check the portal logs.`;
+
+    deps.replies.set(id, body);
+
+    const link = settings.portalUrl === undefined ? undefined : `${settings.portalUrl}/r/${id}`;
+
+    for (const line of Agent.chatLines(body, link)) await deps.chat(line);
+  }
 };

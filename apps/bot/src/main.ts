@@ -2,8 +2,18 @@
 //   portal  127.0.0.1:portalPort  -> exposed via Cloudflare quick tunnel, Steam-login gated
 //   rpc     127.0.0.1:rpcPort     -> `bot` CLI inside WSL (mirrored networking), token-gated
 //   servers one Rust+ websocket per paired server, plugin runtime + recorder
-import { Bindings, Db, Pairing, Rpc, RustPlus, Server, Tunnel, Workspace } from "@better-rust/core";
-import { type Plugin, Starters, Validate, type World } from "@better-rust/dsl";
+import {
+  Bindings,
+  Db,
+  Pairing,
+  Proposal,
+  Rpc,
+  RustPlus,
+  Server,
+  Tunnel,
+  Workspace,
+} from "@better-rust/core";
+import { Starters, Validate, type World } from "@better-rust/dsl";
 import { Effect, Ref, Schedule, Stream } from "effect";
 import { randomBytes } from "node:crypto";
 import { createServer } from "node:http";
@@ -101,7 +111,7 @@ const logActivity = (server: string) => (e: { plugin: string; message: string })
 
 const sessions = new Map<string, string>();
 
-const pending = new Map<string, Plugin>();
+const pending = new Map<string, Proposal.Pending>();
 
 let publicUrl = `http://127.0.0.1:${config.portalPort}`;
 
@@ -230,13 +240,25 @@ const rpcServe = () =>
       bindings: (id) => Effect.runSync(Ref.get(bindingRef(anyServer(id) ?? ""))),
       recorded: (id, from) => Db.recorded(db, anyServer(id) ?? "", from),
       propose: async (requester, r) => {
-        pending.set(requester, r.plugin);
-        await chatAll(
-          `${r.plugin.name}: ${r.plugin.description}`.slice(0, 120) +
-            ` — reply @${config.botName} yes to activate`,
-        );
+        const p = {
+          plugin: r.plugin,
+          code: Proposal.makeCode(),
+          expires: Date.now() + Proposal.TTL_MS,
+        };
 
-        return "awaiting confirmation in team chat";
+        const id = randomBytes(6).toString("base64url");
+
+        const replaces = Effect.runSync(Ref.get(pluginsRef)).find(
+          (l) => l.plugin.name === r.plugin.name,
+        )?.plugin;
+
+        pending.set(requester, p);
+        replies.set(id, JSON.stringify(r.plugin, null, 2));
+
+        for (const line of Proposal.prompt(p, replaces, `${publicUrl}/r/${id}`, config.botName))
+          await chatAll(line);
+
+        return `awaiting "@${config.botName} yes ${p.code}" from the requester in team chat`;
       },
     }),
   });
@@ -276,14 +298,27 @@ const onAgentMessage = async (steamId: string, name: string, text: string) => {
   const body = text.replace(new RegExp(`^\\s*@${config.botName}\\b[\\s,:]*`, "i"), "").trim();
   const isHost = steamId === config.hostSteamId || config.allowlist.includes(steamId);
 
-  if (isHost && /^(yes|confirm|y)$/i.test(body) && pending.has(steamId)) {
-    const plugin = pending.get(steamId)!;
+  const yes = /^(?:yes|confirm|y)(?:\s+(\d{4}))?$/i.exec(body);
+
+  if (isHost && yes) {
+    const r = Proposal.confirm(pending.get(steamId), yes[1], Date.now());
+
+    if (r.kind === "none") return chatAll(`${name}: nothing pending`);
+
+    if (r.kind === "expired") {
+      pending.delete(steamId);
+
+      return chatAll(`${name}: that proposal expired, ask again`);
+    }
+
+    if (r.kind === "wrongCode")
+      return chatAll(`${name}: include the 4-digit code from the proposal`);
 
     pending.delete(steamId);
-    await Workspace.activate(workspaceDir, plugin, name);
+    await Workspace.activate(workspaceDir, r.plugin, name);
     await reloadPlugins();
 
-    return chatAll(`${plugin.name} is live`);
+    return chatAll(`${r.plugin.name} is live`);
   }
 
   if (isHost && /^undo$/i.test(body)) {

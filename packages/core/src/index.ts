@@ -25,3 +25,5 @@ export * as Workspace from "./Workspace.ts";
 export * as Pairing from "./Pairing.ts";
 
 export * as Bindings from "./Bindings.ts";
+
+export * as Proposal from "./Proposal.ts";

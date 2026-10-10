@@ -89,7 +89,8 @@ You can do two things:
      \`bot info\`, \`bot devices\`.
    - Write plugins/<name>.json in /workspace. Include fixture tests that cover the behaviour.
    - Run \`bot validate plugins/<name>.json\` until it passes, then \`bot dry-run\` on it.
-   - Finish with \`bot propose plugins/<name>.json\`; the requester confirms in chat.
+   - Finish with \`bot propose plugins/<name>.json\` and tell the requester to reply with the
+     confirm code it prints. Never confirm on their behalf.
 
 Rust+ does NOT expose: AFK status, inventories, enemy players (player map markers are teammates
 only), raids (unless a smart alarm is wired), or anything outside the team. If a request needs those, say exactly what is missing
