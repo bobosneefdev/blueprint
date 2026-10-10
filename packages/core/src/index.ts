@@ -17,3 +17,7 @@ export * as Server from "./Server.ts";
 export * as Snapshot from "./Snapshot.ts";
 
 export * as SteamAuth from "./SteamAuth.ts";
+
+export * as Tunnel from "./Tunnel.ts";
+
+export * as Workspace from "./Workspace.ts";
