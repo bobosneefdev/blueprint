@@ -10,7 +10,7 @@
   "dependencies": {
     "@better-rust/dsl": "workspace:*",
     "@effect/platform-bun": "4.0.2",
-    "@liamcottle/rustplus.js": "2.5.0",
+    "@liamcottle/push-receiver": "0.0.3",
     "drizzle-orm": "0.45.4",
     "effect": "4.0.2",
     "protobufjs": "7.5.4"

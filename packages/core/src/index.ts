@@ -21,3 +21,5 @@ export * as SteamAuth from "./SteamAuth.ts";
 export * as Tunnel from "./Tunnel.ts";
 
 export * as Workspace from "./Workspace.ts";
+
+export * as Pairing from "./Pairing.ts";
