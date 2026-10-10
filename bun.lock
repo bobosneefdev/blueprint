@@ -99,6 +99,9 @@
         "effect": "4.0.2",
       },
     },
+    "packages/gallery-template": {
+      "name": "@better-rust/gallery-template",
+    },
     "packages/installer": {
       "name": "@better-rust/installer",
     },
@@ -113,6 +116,8 @@
     "@better-rust/desktop": ["@better-rust/desktop@workspace:apps/desktop"],
 
     "@better-rust/dsl": ["@better-rust/dsl@workspace:packages/dsl"],
+
+    "@better-rust/gallery-template": ["@better-rust/gallery-template@workspace:packages/gallery-template"],
 
     "@better-rust/installer": ["@better-rust/installer@workspace:packages/installer"],
 

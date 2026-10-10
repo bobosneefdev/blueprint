@@ -1,0 +1,32 @@
+name: validate
+
+on:
+  pull_request:
+    paths: ["plugins/**"]
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/checkout@v5
+        with:
+          repository: bobosneefdev/better-rust
+          path: better-rust
+      - uses: oven-sh/setup-bun@v2
+      - run: cd better-rust && bun install --frozen-lockfile
+      - name: bot validate every plugin
+        run: |
+          status=0
+          for f in plugins/*.json; do
+            echo "::group::$f"
+            bun better-rust/packages/cli/src/main.ts validate "$f" || status=1
+            echo "::endgroup::"
+          done
+          exit $status
+      - name: unique names
+        run: |
+          dupes=$(jq -r .name plugins/*.json | sort | uniq -d)
+          if [ -n "$dupes" ]; then echo "duplicate plugin names: $dupes"; exit 1; fi
