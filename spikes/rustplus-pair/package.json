@@ -1,0 +1,10 @@
+{
+  "name": "spike-rustplus-pair",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@liamcottle/push-receiver": "0.0.3",
+    "@liamcottle/rustplus.js": "2.5.0",
+    "playwright-core": "1.64.0"
+  }
+}

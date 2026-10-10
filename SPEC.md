@@ -99,7 +99,7 @@ queryable via `bot items`, readable by plugins at runtime.
 
 SvelteKit, served by the sidecar, exposed through a Cloudflare quick tunnel. URL changes every
 start: bot posts it to team chat + tray; OpenID `return_to` derived from the current URL.
-Pages: pairing (guided Rust+ companion login / FCM register, auto-accept in-game pair
+Pages: pairing (button launches Steam login in Edge on the host PC, FCM register, auto-accept in-game pair
 notifications), plugins (list, diff, history, enable/disable, rollback), logs, harnesses, settings
 (bot name, allowlist, ntfy topic), gallery import, live map (Three.js WebGPU).
 
@@ -148,6 +148,15 @@ packages/cli    `bot` CLI used by the agent inside WSL
 packages/installer  install.ps1 + WSL rootfs build
 tools/oxlint/anti-slop  vendored lint rules
 ```
+
+## Rust+ pairing (spike 1 findings)
+
+- Steam login runs on the host PC only: sidecar launches system Edge (`playwright-core` or raw CDP)
+  at Facepunch's `/login`, injects a `ReactNativeWebView.postMessage` shim, player signs in. No
+  remote/phone pairing (Facepunch `returnUrl` allowlist is `app.playrust.com` only).
+- Must show Facepunch's third-party warning unaltered; never press Continue for the player.
+- Vendor `rustplus.proto` with `required` → `optional`.
+- Detect Rust+ auth token expiry (~2 weeks) and prompt re-login.
 
 ## Open
 
