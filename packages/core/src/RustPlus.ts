@@ -145,6 +145,46 @@ const bodyFor = (kind: RequestKind, body: Parameters<Interface["request"]>[1]) =
 };
 
 /** Opens one websocket for the lifetime of the scope. Requests are matched to responses by seq. */
+/**
+ * Server-side limits (CompanionServer.Listener): per player 25 tokens, +3/s; per IP 50, +15/s.
+ * We stay under the per-player bucket with headroom so a burst never gets us throttled.
+ */
+const BUCKET = { capacity: 20, perSecond: 2.5 } as const;
+
+const COST: Record<RequestKind, number> = {
+  getInfo: 1,
+  getTime: 1,
+  getTeamInfo: 1,
+  getMapMarkers: 1,
+  getMap: 5,
+  getEntityInfo: 1,
+  setEntityValue: 1,
+  sendTeamMessage: 2,
+};
+
+/** Token bucket: waits until `cost` tokens are available, then spends them. */
+export const makeBucket = (capacity: number, perSecond: number, now = () => Date.now()) => {
+  let tokens = capacity;
+  let last = now();
+
+  const refill = () => {
+    const t = now();
+
+    tokens = Math.min(capacity, tokens + ((t - last) / 1000) * perSecond);
+    last = t;
+  };
+
+  return {
+    /** Milliseconds to wait before `cost` can be spent (0 = spend now). */
+    take: (cost: number) => {
+      refill();
+      tokens -= cost;
+
+      return tokens >= 0 ? 0 : Math.ceil((-tokens / perSecond) * 1000);
+    },
+  };
+};
+
 export const make = (creds: ServerCredentials, opts?: { readonly timeoutMs?: number }) =>
   Effect.gen(function* () {
     const root = yield* Effect.tryPromise({
@@ -157,6 +197,7 @@ export const make = (creds: ServerCredentials, opts?: { readonly timeoutMs?: num
     const pending = yield* Ref.make(new Map<number, Deferred.Deferred<AppResponse>>());
     const broadcasts = yield* Queue.unbounded<AppBroadcast>();
     const seq = yield* Ref.make(0);
+    const bucket = makeBucket(BUCKET.capacity, BUCKET.perSecond);
 
     const ws = yield* Effect.acquireRelease(
       Effect.callback<WebSocket, ConnectError>((resume) => {
@@ -199,6 +240,11 @@ export const make = (creds: ServerCredentials, opts?: { readonly timeoutMs?: num
       kind: RequestKind,
       body?: Parameters<Interface["request"]>[1],
     ) {
+      // Reserve tokens up front (may go negative), then wait out the deficit: FIFO-fair.
+      const wait = bucket.take(COST[kind]);
+
+      if (wait > 0) yield* Effect.sleep(wait);
+
       const n = yield* Ref.updateAndGet(seq, (x) => x + 1);
       const d = yield* Deferred.make<AppResponse>();
 

@@ -76,3 +76,15 @@ test("request/response by seq, typed errors, broadcasts, tolerant decode", async
     echoed: "hello",
   });
 });
+
+test("token bucket: burst up to capacity, then paced at the refill rate", () => {
+  let t = 0;
+  const b = RustPlus.makeBucket(4, 2, () => t);
+
+  expect([b.take(2), b.take(2)]).toEqual([0, 0]);
+  expect(b.take(2)).toBe(1000);
+  t = 1000;
+  expect(b.take(2)).toBe(1000);
+  t = 5000;
+  expect(b.take(1)).toBe(0);
+});
