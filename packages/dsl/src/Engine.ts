@@ -27,6 +27,8 @@ export interface RunOutput {
   readonly state: ValueMap;
 }
 
+export const MAX_EACH = 32;
+
 export class EvalError extends Data.TaggedError("EvalError")<{
   readonly plugin: string;
   readonly at: string;
@@ -61,7 +63,11 @@ export const run = (input: RunInput): RunOutput => {
 
       at = `steps[${i}].each`;
 
-      const items = step.each === undefined ? [undefined] : Cel.evaluateList(step.each, scope);
+      // Teams are small (Rust caps teams well under this); a larger list means a runaway `each`.
+      const items =
+        step.each === undefined
+          ? [undefined]
+          : Cel.evaluateList(step.each, scope).slice(0, MAX_EACH);
 
       for (const it of items) {
         for (const [j, action] of step.actions.entries()) {

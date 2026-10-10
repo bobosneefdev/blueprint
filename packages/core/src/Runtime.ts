@@ -95,11 +95,15 @@ export interface State {
   readonly lastRun: Map<string, number>;
   /** Unix seconds of each chat message sent, per plugin, for the rolling one-minute budget. */
   readonly chatLog: Map<string, number[]>;
+  /** Unix seconds of each switch/notify effect, per plugin. */
+  readonly effectLog: Map<string, number[]>;
   /** Unix seconds of each /command, per player. Over the limit, commands are dropped silently. */
   readonly commandLog: Map<string, number[]>;
 }
 
 export const COMMANDS_PER_MINUTE = 5;
+
+export const OTHER_EFFECTS_PER_MINUTE = 6;
 
 /** Records the command if the player is under the limit. */
 const allowCommand = (state: State, steamId: string, now: number) => {
@@ -117,6 +121,7 @@ export const initialState = (): State => ({
   lastRun: new Map(),
   chatLog: new Map(),
   commandLog: new Map(),
+  effectLog: new Map(),
 });
 
 /** Which plugins fire for this input, with which event/args. */
@@ -177,8 +182,22 @@ const budget = (
   const kept: Engine.Effect_[] = [];
   let throttled = 0;
 
+  // Switches and notifications cost Rust+ tokens / phone pushes too: same window, separate cap.
+  const other = (state.effectLog.get(plugin.name) ?? []).filter((t) => now - t < 60);
+
   for (const e of effects) {
+    if (Engine.Effect_.$is("SetState")(e)) {
+      kept.push(e);
+      continue;
+    }
+
     if (!Engine.Effect_.$is("TeamChat")(e)) {
+      if (other.length >= OTHER_EFFECTS_PER_MINUTE) {
+        throttled++;
+        continue;
+      }
+
+      other.push(now);
       kept.push(e);
       continue;
     }
@@ -193,6 +212,7 @@ const budget = (
   }
 
   state.chatLog.set(plugin.name, log);
+  state.effectLog.set(plugin.name, other);
 
   return { kept, throttled };
 };

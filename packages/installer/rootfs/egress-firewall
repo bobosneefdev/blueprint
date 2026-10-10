@@ -1,22 +1,32 @@
 #!/bin/sh
 # Default-deny outbound for the agent user. Root (boot, DNS resolution here) is unrestricted.
+# The agent may reach: its LLM provider (HTTPS to allowlisted hosts), DNS on the distro's own
+# resolver only (no DNS tunnelling to arbitrary servers), and the bot RPC port on the Windows host.
+# Nothing else, including other ports on the Windows host or on loopback (portal, browser devtools).
 # ponytail: IPs are resolved once at boot; CDN-backed hosts rotate IPs, so long sessions can lose
 # reach. Upgrade path: local DNS proxy (dnsmasq --ipset/nftset) that adds IPs as they resolve.
 set -u
 AGENT_UID=$(id -u agent)
+RPC_PORT=${BOT_RPC_PORT:-47615}
 WIN_HOST=$(ip route show default | awk '/^default via/ {print $3; exit}')
+RESOLVER=$(awk '/^nameserver/ {print $2; exit}' /etc/resolv.conf)
 
 for ipt in iptables ip6tables; do
   $ipt -F OUTPUT
-  $ipt -A OUTPUT -o lo -j ACCEPT
   $ipt -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
   $ipt -A OUTPUT -m owner ! --uid-owner "$AGENT_UID" -j ACCEPT
-  $ipt -A OUTPUT -p udp --dport 53 -j ACCEPT
-  $ipt -A OUTPUT -p tcp --dport 53 -j ACCEPT
 done
 
-# The Windows bot's RPC port (the `bot` CLI). Nothing else on the host is reachable.
-iptables -A OUTPUT -d "$WIN_HOST" -p tcp --dport "${BOT_RPC_PORT:-47615}" -j ACCEPT
+# Agent rules (everything below only applies to the agent uid).
+# Loopback: only the bot RPC port (mirrored networking puts Windows localhost here).
+iptables -A OUTPUT -o lo -p tcp -d 127.0.0.1 --dport "$RPC_PORT" -j ACCEPT
+# NAT networking: the Windows host is the default gateway; again only the RPC port.
+[ -n "$WIN_HOST" ] && iptables -A OUTPUT -d "$WIN_HOST" -p tcp --dport "$RPC_PORT" -j ACCEPT
+
+if [ -n "$RESOLVER" ]; then
+  iptables -A OUTPUT -d "$RESOLVER" -p udp --dport 53 -j ACCEPT
+  iptables -A OUTPUT -d "$RESOLVER" -p tcp --dport 53 -j ACCEPT
+fi
 
 grep -v '^\s*#' /etc/egress-allow.txt | while read -r host; do
   [ -z "$host" ] && continue

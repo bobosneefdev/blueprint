@@ -91,3 +91,26 @@ test("per-player command rate limit", async () => {
   expect(ask("2", 7)).toBe(1);
   expect(ask("1", 61)).toBe(1);
 });
+
+test("switch/notify effects are capped per plugin per minute", async () => {
+  const alarm = await starter("raid-alarm");
+  const state = initialState();
+
+  const trip = (now: number) =>
+    step(
+      [{ plugin: alarm, enabled: true }],
+      Input.Event({
+        world: world(now),
+        event: {
+          kind: "deviceChanged",
+          payload: { binding: "base-alarm", kind: "alarm", value: true },
+        },
+      }),
+      state,
+    ).outputs[0]?.effects.filter((e) => Engine.Effect_.$is("Notify")(e)).length;
+
+  const notifies = Array.from({ length: 8 }, (_, i) => trip(i));
+
+  expect(notifies.reduce((a, b) => (a ?? 0) + (b ?? 0), 0)).toBe(6);
+  expect(trip(120)).toBe(1);
+});

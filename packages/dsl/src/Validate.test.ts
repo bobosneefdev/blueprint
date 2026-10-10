@@ -77,3 +77,17 @@ test("fixture events must use the real payload, no renamed or extra fields", asy
   );
   expect(extra.ok).toBe(false);
 });
+
+test("expressions with deep comprehension nesting are rejected statically", async () => {
+  const cargo = await Bun.file(dir + "cargo-alert.json").json();
+  const nest = (d: number): string => (d === 0 ? "true" : `team.all(m${d}, ${nest(d - 1)})`);
+
+  const withWhen = (when: string) =>
+    validate({ ...cargo, steps: [{ when, actions: cargo.steps[0].actions }] });
+
+  const deep = withWhen(nest(3));
+
+  expect(deep.ok ? "" : deep.problems[0]?.message).toContain("nested 3 deep");
+  expect(withWhen(nest(2)).ok).toBe(true);
+  expect(withWhen("team.filter(m, m.online).map(m, m.name).size() >= 0").ok).toBe(true);
+});

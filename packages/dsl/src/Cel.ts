@@ -124,7 +124,53 @@ const context = (scope: Scope) => ({
 const firstLine = (e: Error) => e.message.split("\n")[0] ?? "";
 
 /** Static check: syntax + types. Returns an error message or undefined. */
+const MACROS = /\.(all|exists|exists_one|map|filter)\s*\(/g;
+
+/**
+ * Evaluation is synchronous on the bot's only thread, so cost must be bounded statically.
+ * Comprehensions nest multiplicatively (team^depth); 2 levels costs ~5ms with a full team.
+ */
+const costProblem = (expr: string): string | undefined => {
+  if (expr.length > 1000) return "expression longer than 1000 characters";
+
+  let depth = 0;
+  let max = 0;
+  let open: number[] = [];
+
+  // Track how many macro calls are open at once by matching their parentheses.
+  for (let i = 0; i < expr.length; i++) {
+    MACROS.lastIndex = i;
+
+    const m = MACROS.exec(expr);
+
+    if (m?.index === i) {
+      depth++;
+      max = Math.max(max, depth);
+      open.push(0);
+      i += m[0].length - 1;
+      continue;
+    }
+
+    if (expr[i] === "(" && open.length > 0) open[open.length - 1]!++;
+
+    if (expr[i] === ")" && open.length > 0) {
+      if (open[open.length - 1] === 0) {
+        open = open.slice(0, -1);
+        depth--;
+      } else open[open.length - 1]!--;
+    }
+  }
+
+  return max > 2
+    ? `comprehensions nested ${max} deep (max 2): split into steps with state`
+    : undefined;
+};
+
 export const check = (expr: string): string | undefined => {
+  const cost = costProblem(expr);
+
+  if (cost !== undefined) return cost;
+
   try {
     const r = base.check(expr);
 

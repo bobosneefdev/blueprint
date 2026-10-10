@@ -163,7 +163,10 @@ tools/oxlint/anti-slop  vendored lint rules
 As the `agent` user with the shipped `wsl.conf` + `egress-firewall`: Windows drives not mounted,
 `cmd.exe` (interop) unavailable, no `sudo`, arbitrary HTTPS rejected; `api.anthropic.com`, DNS and
 the bot RPC port on the Windows host reachable; musl `bot` CLI runs. Found and fixed: the default
-route parse picked up two lines on WSL2 (`default via` + a second route line).
+route parse picked up two lines on WSL2 (`default via` + a second route line). After the security
+review: DNS only to the distro resolver (1.1.1.1 blocked), other loopback ports (portal) and other
+Windows host ports blocked; a drvfs mount of one Windows directory does not expose its parent, but
+drvfs ignores `ro` for the agent, so game data is copied in rather than mounted.
 
 ## Agent quality (measured 2026-10-10, real harness runs against the bot CLI)
 
