@@ -19,7 +19,7 @@
   <title>better-rust</title>
 </svelte:head>
 
-{#if page.url.pathname.startsWith("/auth") || page.url.pathname === "/pair"}
+{#if page.url.pathname.startsWith("/auth") || page.url.pathname === "/pair" || page.url.pathname === "/harness"}
   {@render children()}
 {:else}
   <nav class="navbar bg-base-200 px-4">

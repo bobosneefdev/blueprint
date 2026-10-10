@@ -2,6 +2,8 @@
 // short reply in chat, full reply kept for the portal.
 import { Agent, Harness } from "@better-rust/core";
 import { randomUUID } from "node:crypto";
+import * as HarnessAuth from "./HarnessAuth.ts";
+import * as Sandbox from "./Sandbox.ts";
 
 export interface Deps {
   readonly settings: () => Agent.Settings;
@@ -22,20 +24,32 @@ export interface Deps {
 }
 
 /** On Windows, every harness runs inside the locked-down distro as the agent user. */
-const sandboxed = (argv: string[], env: Record<string, string>) =>
+/** POSIX single-quote: the only safe way to pass arbitrary chat text through `sh -c`. */
+export const shQuote = (s: string) => `'${s.replaceAll("'", `'"'"'`)}'`;
+
+/**
+ * On Windows the harness runs in the sandbox distro as `agent`, with stored harness credentials
+ * sourced first. The prompt comes from team chat, so every argument is single-quoted.
+ */
+export const sandboxed = (argv: string[], env: Record<string, string>) =>
   process.platform === "win32"
     ? [
         "wsl.exe",
         "-d",
-        "better-rust-agent",
+        Sandbox.DISTRO,
         "-u",
         "agent",
         "--cd",
         "/workspace",
         "--",
-        "env",
-        ...Object.entries(env).map(([k, v]) => `${k}=${v}`),
-        ...argv,
+        "sh",
+        "-c",
+        [
+          HarnessAuth.ENV_PRELUDE,
+          ...Object.entries(env).map(([k, v]) => `export ${k}=${shQuote(v)};`),
+          "exec",
+          ...argv.map(shQuote),
+        ].join(" "),
       ]
     : argv;
 

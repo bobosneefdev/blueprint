@@ -11,6 +11,7 @@ import { join } from "node:path";
 import * as AgentRunner from "./AgentRunner.ts";
 import * as Config from "./Config.ts";
 import * as GameData from "./GameData.ts";
+import * as HarnessAuth from "./HarnessAuth.ts";
 import * as Notify from "./Notify.ts";
 import * as Sandbox from "./Sandbox.ts";
 import * as SteamLogin from "./SteamLogin.ts";
@@ -107,6 +108,10 @@ attach({
   pairing: () => ({ signedIn: config.rustplus !== undefined, hostSteamId: config.hostSteamId }),
   pair: () => pair(),
   activity: () => activity,
+  saveHarnessCredential: async (c) => {
+    Sandbox.prepare(home);
+    HarnessAuth.save(c);
+  },
   settings: () => ({
     botName: config.botName,
     allowlist: config.allowlist,

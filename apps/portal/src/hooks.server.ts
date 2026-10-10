@@ -22,7 +22,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   event.locals.local = local;
 
   // First run and Rust+ sign-in happen on the host PC only; nobody can claim host remotely.
-  if (event.url.pathname === "/pair")
+  if (event.url.pathname === "/pair" || event.url.pathname === "/harness")
     return local
       ? resolve(event)
       : new Response("Pairing is only available on the host PC.", { status: 403 });

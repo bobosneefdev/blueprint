@@ -30,6 +30,8 @@ export interface Bot {
   /** Opens Steam sign-in on the host PC; resolves with the signed-in SID64. */
   readonly pair: () => Promise<string>;
   readonly settings: () => Settings;
+  /** Host PC only: stores a harness credential inside the sandbox. */
+  readonly saveHarnessCredential: (c: HarnessCredential) => Promise<void>;
   /** Most recent first. */
   readonly activity: () => ReadonlyArray<{
     readonly at: number;
@@ -42,6 +44,11 @@ export interface Bot {
   /** Validates, then activates a plugin from a URL (gallery import). Returns problems if invalid. */
   readonly importPlugin: (url: string, by: string) => Promise<ReadonlyArray<string>>;
 }
+
+export type HarnessCredential =
+  | { readonly harness: "claude"; readonly kind: "oauthToken" | "apiKey"; readonly value: string }
+  | { readonly harness: "codex"; readonly kind: "apiKey"; readonly value: string }
+  | { readonly harness: "pi"; readonly envVar: string; readonly value: string };
 
 export interface Settings {
   readonly botName: string;
