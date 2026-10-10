@@ -199,5 +199,8 @@ export const run = (opts: Options) =>
       Effect.forkScoped,
     );
 
-    return { world: SubscriptionRef.changes(world), current: SubscriptionRef.get(world) };
+    /** Map image changes only on wipe; fetched lazily for the portal. */
+    const map = rp.request("getMap").pipe(Effect.map((r) => r.map));
+
+    return { world: SubscriptionRef.changes(world), current: SubscriptionRef.get(world), map };
   });

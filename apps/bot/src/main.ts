@@ -53,6 +53,16 @@ await reloadPlugins();
 // ── Live state shared by portal, RPC and agent ──────────────────────────────────────────────────
 const worlds = new Map<string, World>();
 
+/** Map JPEG per server, fetched once per connection on first portal request. */
+const mapFetchers = new Map<
+  string,
+  () => Promise<
+    { jpgImage?: string; width?: number; height?: number; oceanMargin?: number } | undefined
+  >
+>();
+
+const mapCache = new Map<string, Promise<{ jpg: Uint8Array; oceanMargin: number } | undefined>>();
+
 const chatSinks = new Map<string, (line: string) => Promise<void>>();
 
 const replies = new Map<string, string>();
@@ -106,6 +116,25 @@ attach({
   },
   reply: (id) => replies.get(id),
   diff: (name, commit) => Workspace.diff(workspaceDir, name, commit),
+  mapImage: (id) => {
+    const cached = mapCache.get(id);
+
+    if (cached) return cached;
+
+    const fetcher = mapFetchers.get(id);
+
+    if (!fetcher) return Promise.resolve(undefined);
+
+    const p = fetcher().then((m) =>
+      m?.jpgImage
+        ? { jpg: Buffer.from(m.jpgImage, "base64"), oceanMargin: m.oceanMargin ?? 0 }
+        : undefined,
+    );
+
+    mapCache.set(id, p);
+
+    return p;
+  },
   pairing: () => ({ signedIn: config.rustplus !== undefined, hostSteamId: config.hostSteamId }),
   pair: () => pair(),
   activity: () => activity,
@@ -281,6 +310,7 @@ const runServer = (s: Db.ServerRow) =>
         botPrefix: BOT_PREFIX,
       });
 
+      mapFetchers.set(s.id, () => Effect.runPromise(live.map));
       yield* live.world.pipe(Stream.runForEach((w) => Effect.sync(() => w && worlds.set(s.id, w))));
     }),
   ).pipe(

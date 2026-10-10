@@ -30,6 +30,7 @@ export type RequestKind =
   | "getTime"
   | "getTeamInfo"
   | "getMapMarkers"
+  | "getMap"
   | "getEntityInfo"
   | "setEntityValue"
   | "sendTeamMessage";
@@ -89,6 +90,13 @@ export interface AppResponse {
   readonly teamInfo?: AppTeamInfo;
   readonly mapMarkers?: { readonly markers?: ReadonlyArray<AppMarker> };
   readonly entityInfo?: AppEntityInfo;
+  /** jpgImage is base64 (protobufjs toObject bytes default). */
+  readonly map?: {
+    readonly width?: number;
+    readonly height?: number;
+    readonly jpgImage?: string;
+    readonly oceanMargin?: number;
+  };
 }
 
 export interface AppBroadcast {
@@ -121,7 +129,7 @@ const protoPath = new URL("../proto/rustplus.proto", import.meta.url).pathname.r
   "$1",
 );
 
-const toObjectOptions = { longs: String, enums: Number, defaults: false } as const;
+const toObjectOptions = { longs: String, enums: Number, bytes: String, defaults: false } as const;
 
 const bodyFor = (kind: RequestKind, body: Parameters<Interface["request"]>[1]) => {
   switch (kind) {

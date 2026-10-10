@@ -16,7 +16,10 @@
   {#each data.servers as s (s.id)}
     <div class="card bg-base-200">
       <div class="card-body">
-        <h2 class="card-title">{s.name}</h2>
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="card-title">{s.name}</h2>
+          <a class="btn btn-sm" href="/map/{s.id}">Map</a>
+        </div>
         <div class="stats">
           <div class="stat">
             <div class="stat-title">Players</div>
