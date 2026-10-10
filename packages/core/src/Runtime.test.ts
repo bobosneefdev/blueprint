@@ -73,3 +73,21 @@ test("event filter and chat budget", async () => {
     [0, 1],
   ]);
 });
+
+test("per-player command rate limit", async () => {
+  const pop = await starter("pop");
+  const state = initialState();
+
+  const ask = (steamId: string, now: number) =>
+    step(
+      [{ plugin: pop, enabled: true }],
+      Input.Chat({ world: world(now), steamId, name: "x", text: "/pop" }),
+      state,
+    ).outputs.length;
+
+  const spam = [0, 1, 2, 3, 4, 5, 6].map((t) => ask("1", t));
+
+  expect(spam).toEqual([1, 1, 1, 1, 1, 0, 0]);
+  expect(ask("2", 7)).toBe(1);
+  expect(ask("1", 61)).toBe(1);
+});

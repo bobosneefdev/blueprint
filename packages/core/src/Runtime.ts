@@ -95,12 +95,28 @@ export interface State {
   readonly lastRun: Map<string, number>;
   /** Unix seconds of each chat message sent, per plugin, for the rolling one-minute budget. */
   readonly chatLog: Map<string, number[]>;
+  /** Unix seconds of each /command, per player. Over the limit, commands are dropped silently. */
+  readonly commandLog: Map<string, number[]>;
 }
+
+export const COMMANDS_PER_MINUTE = 5;
+
+/** Records the command if the player is under the limit. */
+const allowCommand = (state: State, steamId: string, now: number) => {
+  const recent = (state.commandLog.get(steamId) ?? []).filter((t) => now - t < 60);
+
+  if (recent.length >= COMMANDS_PER_MINUTE) return false;
+
+  state.commandLog.set(steamId, [...recent, now]);
+
+  return true;
+};
 
 export const initialState = (): State => ({
   pluginState: new Map(),
   lastRun: new Map(),
   chatLog: new Map(),
+  commandLog: new Map(),
 });
 
 /** Which plugins fire for this input, with which event/args. */
@@ -131,7 +147,7 @@ const select = (plugins: ReadonlyArray<Installed>, input: Input, state: State): 
       const [name, words] = parsed;
       const plugin = enabled.find((p) => commandOf(p.trigger)?.name === name);
 
-      if (!plugin) return [];
+      if (!plugin || !allowCommand(state, chat.steamId, chat.world.now)) return [];
 
       const event = { steamId: chat.steamId, name: chat.name, text: chat.text };
 
