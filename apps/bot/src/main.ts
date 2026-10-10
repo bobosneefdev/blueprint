@@ -3,7 +3,7 @@
 //   rpc     127.0.0.1:rpcPort     -> `bot` CLI inside WSL (mirrored networking), token-gated
 //   servers one Rust+ websocket per paired server, plugin runtime + recorder
 import { Bindings, Db, Pairing, Rpc, RustPlus, Server, Tunnel, Workspace } from "@better-rust/core";
-import { type Plugin, Validate, type World } from "@better-rust/dsl";
+import { type Plugin, Starters, Validate, type World } from "@better-rust/dsl";
 import { Effect, Ref, Schedule, Stream } from "effect";
 import { randomBytes } from "node:crypto";
 import { createServer } from "node:http";
@@ -25,7 +25,7 @@ const workspaceDir = join(home, "workspace");
 
 const BOT_PREFIX = "[bot] ";
 
-Workspace.init(workspaceDir);
+await Workspace.init(workspaceDir, Starters.all());
 
 // Game data for the agent (`bot items`, `bot raid`, rg/jq). Refreshed on start and daily.
 const syncGameData = () =>

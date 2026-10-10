@@ -15,7 +15,8 @@ const git = (dir: string, ...args: string[]) => {
   return r.stdout.toString();
 };
 
-export const init = (dir: string) => {
+/** Creates the repo on first run, seeded with `starters` (already validated plugins). */
+export const init = async (dir: string, starters: ReadonlyArray<Plugin> = []) => {
   mkdirSync(join(dir, "plugins"), { recursive: true });
   mkdirSync(join(dir, "servers"), { recursive: true });
 
@@ -24,6 +25,15 @@ export const init = (dir: string) => {
   git(dir, "init", "-q", "-b", "main");
   git(dir, "config", "user.name", "better-rust");
   git(dir, "config", "user.email", "bot@better-rust.local");
+
+  // Plugins needing a smart device start disabled; the rest work out of the box.
+  const enabled = Object.fromEntries(starters.map((p) => [p.name, p.bindings.length === 0]));
+
+  for (const p of starters)
+    await Bun.write(join(dir, "plugins", `${p.name}.json`), `${JSON.stringify(p, null, 2)}\n`);
+
+  await Bun.write(enabledPath(dir), `${JSON.stringify(enabled, null, 2)}\n`);
+  commitAll(dir, "starter plugins");
 };
 
 const enabledPath = (dir: string) => join(dir, "enabled.json");

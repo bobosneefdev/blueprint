@@ -193,8 +193,13 @@ export const runFixture = (plugin: Plugin, fixture: Fixture): Problem | undefine
 
 const decodePlugin = Schema.decodeUnknownExit(Plugin);
 
-/** Accepts raw JSON (the agent's file); this is the trust boundary. */
-export const validate = (json: Schema.Json): Result => {
+/**
+ * The trust boundary: accepts anything parsed from JSON (agent files, gallery downloads, bundled
+ * imports, whose inferred TS types are wider than Schema.Json) and decodes it.
+ */
+export type Input = Parameters<typeof decodePlugin>[0];
+
+export const validate = (json: Input): Result => {
   const decoded = decodePlugin(json);
 
   if (Exit.isFailure(decoded))

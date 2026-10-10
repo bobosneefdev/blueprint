@@ -20,7 +20,7 @@ test("activate, toggle, history, rollback, undo", async () => {
   const dir = mkdtempSync(join(tmpdir(), "br-ws-"));
   const pop = await starter("pop");
 
-  Workspace.init(dir);
+  await Workspace.init(dir);
   await Workspace.activate(dir, pop, "host");
   await Workspace.activate(dir, { ...pop, version: 2, description: "v2" }, "host");
 
@@ -46,7 +46,7 @@ test("activate, toggle, history, rollback, undo", async () => {
 test("invalid plugin files are reported, not loaded", async () => {
   const dir = mkdtempSync(join(tmpdir(), "br-ws-"));
 
-  Workspace.init(dir);
+  await Workspace.init(dir);
   await Bun.write(join(dir, "plugins", "broken.json"), '{"name":"broken"}');
 
   const r = await Workspace.load(dir);
@@ -59,4 +59,18 @@ test("tunnel url parsing", () => {
     parseUrl("2026-10-10T11:00:00Z INF |  https://calm-river-banana-sunset.trycloudflare.com  |"),
   ).toBe("https://calm-river-banana-sunset.trycloudflare.com");
   expect(parseUrl("INF Starting tunnel")).toBeUndefined();
+});
+
+test("first run seeds starters; device plugins start disabled", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "br-ws-"));
+
+  await Workspace.init(dir, [await starter("pop"), await starter("night-lights")]);
+
+  const r = await Workspace.load(dir);
+
+  expect(r.loaded.map((l) => [l.plugin.name, l.enabled])).toEqual([
+    ["night-lights", false],
+    ["pop", true],
+  ]);
+  expect(Workspace.history(dir, "pop")[0]?.message).toBe("starter plugins");
 });
