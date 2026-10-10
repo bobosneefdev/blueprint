@@ -12,6 +12,9 @@ export const Expr = Schema.String.check(Schema.isMinLength(1)).annotate({
 
 export const Name = Schema.String.check(Schema.isPattern(/^[a-z][a-z0-9-]{1,31}$/));
 
+/** State keys and command args are read from CEL (`state.lastIsDay`), so they must be identifiers. */
+export const Ident = Schema.String.check(Schema.isPattern(/^[a-zA-Z_][a-zA-Z0-9_]{0,31}$/));
+
 /** JSON-compatible value: state, event payloads, CEL results. */
 export const Value = Schema.Json;
 
@@ -41,7 +44,7 @@ export const EventKind = Schema.Literals([
 export type EventKind = typeof EventKind.Type;
 
 export const Arg = Schema.Struct({
-  name: Name,
+  name: Ident,
   type: Schema.Literals(["string", "number"]),
   optional: Schema.optionalKey(Schema.Boolean),
 });
@@ -65,7 +68,7 @@ export type Trigger = typeof Trigger.Type;
 export const Action = Schema.TaggedUnion({
   TeamChat: { text: Schema.String },
   SmartSwitch: { binding: Name, on: Expr },
-  SetState: { key: Name, value: Expr },
+  SetState: { key: Ident, value: Expr },
   Notify: { text: Schema.String, channel: Schema.Literals(["toast", "phone", "both"]) },
 });
 
@@ -95,7 +98,7 @@ export const Expected = Schema.TaggedUnion({
   TeamChat: { contains: Schema.String },
   Notify: { contains: Schema.String },
   SmartSwitch: { binding: Name, on: Schema.Boolean },
-  SetState: { key: Name },
+  SetState: { key: Ident },
 });
 
 export type Expected = typeof Expected.Type;
@@ -140,7 +143,7 @@ export const Plugin = Schema.Struct({
   heuristic: Schema.optionalKey(Schema.String),
   trigger: Trigger,
   /** Declared state keys and their initial values. */
-  state: ValueMap,
+  state: Schema.Record(Ident, Value),
   bindings: Schema.Array(Binding),
   steps: Schema.Array(Step).check(Schema.isMinLength(1)),
   /** Max team chat messages per rolling minute. */

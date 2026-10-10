@@ -1,0 +1,24 @@
+{
+  "name": "death-notice",
+  "description": "Tell the team where a teammate died.",
+  "version": 1,
+  "trigger": { "_tag": "Event", "kind": "memberDied" },
+  "state": {},
+  "bindings": [],
+  "steps": [
+    {
+      "actions": [
+        { "_tag": "TeamChat", "text": "{{event.name}} died at {{grid(event.x, event.y)}}" }
+      ]
+    }
+  ],
+  "chatBudget": 5,
+  "tests": [
+    {
+      "name": "reports grid",
+      "world": {},
+      "event": { "steamId": "1", "name": "Amy", "x": 1500.0, "y": 3000.0 },
+      "expect": [{ "_tag": "TeamChat", "contains": "Amy died at K10" }]
+    }
+  ]
+}

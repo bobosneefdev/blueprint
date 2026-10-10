@@ -1,0 +1,18 @@
+{
+  "name": "online-notice",
+  "description": "Announce when teammates come online or go offline.",
+  "version": 1,
+  "trigger": { "_tag": "Event", "kind": "memberOnline" },
+  "state": {},
+  "bindings": [],
+  "steps": [{ "actions": [{ "_tag": "TeamChat", "text": "{{event.name}} is online" }] }],
+  "chatBudget": 5,
+  "tests": [
+    {
+      "name": "announces",
+      "world": {},
+      "event": { "steamId": "1", "name": "Amy", "x": 0.0, "y": 0.0 },
+      "expect": [{ "_tag": "TeamChat", "contains": "Amy is online" }]
+    }
+  ]
+}

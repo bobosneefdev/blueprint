@@ -1,0 +1,26 @@
+{
+  "name": "wipe-notice",
+  "description": "Announce a detected wipe and remind to re-pair devices.",
+  "version": 1,
+  "trigger": { "_tag": "Event", "kind": "wipe" },
+  "state": {},
+  "bindings": [],
+  "steps": [
+    {
+      "actions": [
+        {
+          "_tag": "TeamChat",
+          "text": "Server wiped. Device plugins paused: re-pair smart devices in game."
+        }
+      ]
+    }
+  ],
+  "chatBudget": 1,
+  "tests": [
+    {
+      "name": "announces",
+      "world": {},
+      "expect": [{ "_tag": "TeamChat", "contains": "Server wiped" }]
+    }
+  ]
+}

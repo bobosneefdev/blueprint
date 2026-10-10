@@ -1,0 +1,26 @@
+{
+  "name": "pop",
+  "description": "/pop: server population and queue.",
+  "version": 1,
+  "trigger": { "_tag": "Command", "name": "pop", "args": [] },
+  "state": {},
+  "bindings": [],
+  "steps": [
+    {
+      "actions": [
+        {
+          "_tag": "TeamChat",
+          "text": "{{int(server.players)}}/{{int(server.maxPlayers)}} online, {{int(server.queued)}} queued"
+        }
+      ]
+    }
+  ],
+  "chatBudget": 4,
+  "tests": [
+    {
+      "name": "formats",
+      "world": { "server": { "players": 180.0, "maxPlayers": 200.0, "queued": 12.0 } },
+      "expect": [{ "_tag": "TeamChat", "contains": "180/200 online, 12 queued" }]
+    }
+  ]
+}

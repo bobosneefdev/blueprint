@@ -1,0 +1,42 @@
+{
+  "name": "team-status",
+  "description": "/team: who is online and where.",
+  "version": 1,
+  "trigger": { "_tag": "Command", "name": "team", "args": [] },
+  "state": {},
+  "bindings": [],
+  "steps": [
+    {
+      "when": "team.exists(m, m.online)",
+      "actions": [
+        {
+          "_tag": "TeamChat",
+          "text": "{{team.filter(m, m.online).map(m, m.name + ' ' + (m.alive ? grid(m.x, m.y) : 'dead'))}}"
+        }
+      ]
+    },
+    {
+      "when": "!team.exists(m, m.online)",
+      "actions": [{ "_tag": "TeamChat", "text": "Nobody else is online" }]
+    }
+  ],
+  "chatBudget": 4,
+  "tests": [
+    {
+      "name": "lists online with grid",
+      "world": {
+        "team": [
+          { "steamId": "1", "name": "Amy", "x": 1500.0, "y": 3000.0 },
+          { "steamId": "2", "name": "Bob", "online": false },
+          { "steamId": "3", "name": "Cat", "alive": false }
+        ]
+      },
+      "expect": [{ "_tag": "TeamChat", "contains": "Amy K10, Cat dead" }]
+    },
+    {
+      "name": "nobody",
+      "world": { "team": [{ "steamId": "2", "name": "Bob", "online": false }] },
+      "expect": [{ "_tag": "TeamChat", "contains": "Nobody else is online" }]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "name": "heli-alert",
+  "description": "Warn the team when Patrol Helicopter or Chinook enters the map.",
+  "version": 1,
+  "trigger": {
+    "_tag": "Event",
+    "kind": "markerAppeared",
+    "filter": "event.kind == 'patrolHelicopter' || event.kind == 'chinook'"
+  },
+  "state": {},
+  "bindings": [],
+  "steps": [
+    {
+      "when": "event.kind == 'patrolHelicopter'",
+      "actions": [
+        { "_tag": "TeamChat", "text": "Patrol Heli inbound near {{grid(event.x, event.y)}}" }
+      ]
+    },
+    {
+      "when": "event.kind == 'chinook'",
+      "actions": [{ "_tag": "TeamChat", "text": "Chinook spotted at {{grid(event.x, event.y)}}" }]
+    }
+  ],
+  "chatBudget": 3,
+  "tests": [
+    {
+      "name": "heli",
+      "world": {},
+      "event": { "kind": "patrolHelicopter", "x": 100.0, "y": 4400.0 },
+      "expect": [{ "_tag": "TeamChat", "contains": "Patrol Heli inbound near A0" }]
+    },
+    {
+      "name": "chinook",
+      "world": {},
+      "event": { "kind": "chinook", "x": 2250.0, "y": 2250.0 },
+      "expect": [{ "_tag": "TeamChat", "contains": "Chinook spotted at P15" }]
+    }
+  ]
+}

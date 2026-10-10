@@ -1,0 +1,38 @@
+{
+  "name": "raid-alarm",
+  "description": "Relay the base smart alarm to team chat and phone.",
+  "version": 1,
+  "trigger": {
+    "_tag": "Event",
+    "kind": "deviceChanged",
+    "filter": "event.binding == 'base-alarm' && event.value == true"
+  },
+  "state": {},
+  "bindings": [
+    {
+      "name": "base-alarm",
+      "kind": "alarm",
+      "description": "Smart alarm wired to base HBHF sensors / TC"
+    }
+  ],
+  "steps": [
+    {
+      "actions": [
+        { "_tag": "TeamChat", "text": "BASE ALARM triggered" },
+        { "_tag": "Notify", "text": "Base alarm triggered on {{server.name}}", "channel": "both" }
+      ]
+    }
+  ],
+  "chatBudget": 2,
+  "tests": [
+    {
+      "name": "relays",
+      "world": { "server": { "name": "Rustoria Main" } },
+      "event": { "binding": "base-alarm", "kind": "alarm", "value": true },
+      "expect": [
+        { "_tag": "TeamChat", "contains": "BASE ALARM" },
+        { "_tag": "Notify", "contains": "Rustoria Main" }
+      ]
+    }
+  ]
+}

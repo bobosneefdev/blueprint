@@ -1,0 +1,33 @@
+{
+  "name": "night-lights",
+  "description": "Turn the base lights switch on at night and off in the day.",
+  "version": 1,
+  "trigger": { "_tag": "Schedule", "everySeconds": 60 },
+  "state": { "lastIsDay": true },
+  "bindings": [
+    { "name": "lights", "kind": "switch", "description": "Smart switch powering base lights" }
+  ],
+  "steps": [
+    {
+      "when": "time.isDay != state.lastIsDay",
+      "actions": [{ "_tag": "SmartSwitch", "binding": "lights", "on": "!time.isDay" }]
+    },
+    { "actions": [{ "_tag": "SetState", "key": "lastIsDay", "value": "time.isDay" }] }
+  ],
+  "chatBudget": 0,
+  "tests": [
+    {
+      "name": "switches on at dusk",
+      "world": { "time": { "isDay": false } },
+      "expect": [
+        { "_tag": "SmartSwitch", "binding": "lights", "on": true },
+        { "_tag": "SetState", "key": "lastIsDay" }
+      ]
+    },
+    {
+      "name": "no change, no switch",
+      "world": { "time": { "isDay": true } },
+      "expect": [{ "_tag": "SetState", "key": "lastIsDay" }]
+    }
+  ]
+}
