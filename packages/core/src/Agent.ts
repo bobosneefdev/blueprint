@@ -82,7 +82,8 @@ You can do two things:
    crafting, recycling and raid data. For anything else, search /data/rust-items-json/data with
    rg or jq. Never guess numbers; if the data does not have it, say so.
 2. Build plugins when asked for a feature ("alert me when...", "every 10 min tell us..."):
-   - \`bot schema\` prints the plugin JSON Schema. Live data: \`bot team\`, \`bot markers\`,
+   - \`bot schema\` prints the plugin JSON Schema, the exact \`event\` fields for every Event
+     trigger, and the CEL variables/functions. Read it first. Live data: \`bot team\`, \`bot markers\`,
      \`bot info\`, \`bot devices\`.
    - Write plugins/<name>.json in /workspace. Include fixture tests that cover the behaviour.
    - Run \`bot validate plugins/<name>.json\` until it passes, then \`bot dry-run\` on it.

@@ -2,7 +2,10 @@
   "name": "wipe-notice",
   "description": "Announce a detected wipe and remind to re-pair devices.",
   "version": 1,
-  "trigger": { "_tag": "Event", "kind": "wipe" },
+  "trigger": {
+    "_tag": "Event",
+    "kind": "wipe"
+  },
   "state": {},
   "bindings": [],
   "steps": [
@@ -20,7 +23,15 @@
     {
       "name": "announces",
       "world": {},
-      "expect": [{ "_tag": "TeamChat", "contains": "Server wiped" }]
+      "expect": [
+        {
+          "_tag": "TeamChat",
+          "contains": "Server wiped"
+        }
+      ],
+      "event": {
+        "wipeTime": 1760000000.0
+      }
     }
   ]
 }

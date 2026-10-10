@@ -3,7 +3,15 @@
 import { Exit, Schema } from "effect";
 import * as Cel from "./Cel.ts";
 import * as Engine from "./Engine.ts";
-import { Action, Expected, type Fixture, type FixtureWorld, Plugin, Trigger } from "./Plugin.ts";
+import {
+  Action,
+  EventPayloads,
+  Expected,
+  type Fixture,
+  type FixtureWorld,
+  Plugin,
+  Trigger,
+} from "./Plugin.ts";
 import type { World } from "./World.ts";
 
 export interface Problem {
@@ -132,8 +140,28 @@ const describeExpected = (x: Expected): string =>
   });
 
 /** Ordered match: expected effects must appear in order, with nothing extra. */
+/** Event-triggered fixtures must use exactly the payload the server sends for that kind. */
+const eventPayloadProblem = (plugin: Plugin, fixture: Fixture): string | undefined => {
+  if (!Trigger.guards.Event(plugin.trigger)) return undefined;
+
+  const payload = EventPayloads[plugin.trigger.kind];
+
+  const r = Schema.decodeUnknownExit(payload)(fixture.event ?? {}, {
+    onExcessProperty: "error",
+  });
+
+  if (Exit.isSuccess(r)) return undefined;
+
+  const fields = JSON.stringify(Object.keys(payload.fields));
+
+  return `event must match the real ${plugin.trigger.kind} payload ${fields}: ${String(r.cause).split("\n")[0]}`;
+};
+
 export const runFixture = (plugin: Plugin, fixture: Fixture): Problem | undefined => {
   const path = `tests["${fixture.name}"]`;
+  const payloadProblem = eventPayloadProblem(plugin, fixture);
+
+  if (payloadProblem !== undefined) return { path: `${path}.event`, message: payloadProblem };
 
   try {
     const { effects } = Engine.run({
@@ -184,4 +212,22 @@ export const validate = (json: Schema.Json): Result => {
     : { ok: true, plugin, passed: plugin.tests.length };
 };
 
-export const jsonSchema = () => Schema.toJsonSchemaDocument(Plugin);
+export const jsonSchema = () => ({
+  plugin: Schema.toJsonSchemaDocument(Plugin),
+  /** `event` in CEL for each Event trigger kind (flat map, e.g. event.x). */
+  eventPayloads: Object.fromEntries(
+    Object.entries(EventPayloads).map(([k, s]) => [k, Object.keys(s.fields)]),
+  ),
+  celVariables: {
+    now: "double unix seconds",
+    team: "list<Member{steamId,name,x,y,online,alive,spawnTime,deathTime,lastMovedAt}>",
+    markers: "list<Marker{id,kind,x,y,name}>",
+    server: "map{name,mapSize,wipeTime,players,maxPlayers,queued}",
+    time: "map{hour,sunrise,sunset,isDay}",
+    devices: "map<bindingName,bool>",
+    state: "map (this plugin's declared state)",
+    args: "map (command args)",
+    it: "current element inside a step with `each`",
+    functions: "distance(x1,y1,x2,y2), grid(x,y) -> 'G12', minutes(seconds)",
+  },
+});

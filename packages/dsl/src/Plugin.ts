@@ -43,6 +43,40 @@ export const EventKind = Schema.Literals([
 
 export type EventKind = typeof EventKind.Type;
 
+const Pos = { x: Schema.Number, y: Schema.Number };
+
+const MemberEvent = Schema.Struct({ steamId: Schema.String, name: Schema.String, ...Pos });
+
+const MarkerEvent = Schema.Struct({
+  id: Schema.String,
+  kind: Schema.String,
+  name: Schema.String,
+  ...Pos,
+});
+
+/**
+ * Exact `event` payload per trigger kind (flat; e.g. `event.kind`, `event.x`). Fixture events are
+ * checked against these, so a test cannot pass on a payload shape the server never sends.
+ */
+export const EventPayloads = {
+  teamChanged: Schema.Struct({}),
+  teamChat: Schema.Struct({ steamId: Schema.String, name: Schema.String, text: Schema.String }),
+  memberOnline: MemberEvent,
+  memberOffline: MemberEvent,
+  memberDied: MemberEvent,
+  memberRespawned: MemberEvent,
+  markerAppeared: MarkerEvent,
+  markerDisappeared: MarkerEvent,
+  deviceChanged: Schema.Struct({
+    binding: Schema.String,
+    kind: Schema.String,
+    value: Schema.Boolean,
+  }),
+  dayStarted: Schema.Struct({}),
+  nightStarted: Schema.Struct({}),
+  wipe: Schema.Struct({ wipeTime: Schema.Number }),
+} satisfies Record<EventKind, Schema.Top>;
+
 export const Arg = Schema.Struct({
   name: Ident,
   type: Schema.Literals(["string", "number"]),
@@ -57,7 +91,10 @@ export const Trigger = Schema.TaggedUnion({
   Command: { name: Name, args: Schema.Array(Arg) },
   Schedule: { everySeconds: Every },
   CommandAndSchedule: { name: Name, args: Schema.Array(Arg), everySeconds: Every },
-  Event: { kind: EventKind, filter: Schema.optionalKey(Expr) },
+  Event: {
+    kind: EventKind,
+    filter: Schema.optionalKey(Expr),
+  },
 });
 
 export type Trigger = typeof Trigger.Type;

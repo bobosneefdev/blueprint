@@ -13,12 +13,20 @@
     {
       "when": "event.kind == 'patrolHelicopter'",
       "actions": [
-        { "_tag": "TeamChat", "text": "Patrol Heli inbound near {{grid(event.x, event.y)}}" }
+        {
+          "_tag": "TeamChat",
+          "text": "Patrol Heli inbound near {{grid(event.x, event.y)}}"
+        }
       ]
     },
     {
       "when": "event.kind == 'chinook'",
-      "actions": [{ "_tag": "TeamChat", "text": "Chinook spotted at {{grid(event.x, event.y)}}" }]
+      "actions": [
+        {
+          "_tag": "TeamChat",
+          "text": "Chinook spotted at {{grid(event.x, event.y)}}"
+        }
+      ]
     }
   ],
   "chatBudget": 3,
@@ -26,14 +34,36 @@
     {
       "name": "heli",
       "world": {},
-      "event": { "kind": "patrolHelicopter", "x": 100.0, "y": 4400.0 },
-      "expect": [{ "_tag": "TeamChat", "contains": "Patrol Heli inbound near A0" }]
+      "event": {
+        "kind": "patrolHelicopter",
+        "x": 100.0,
+        "y": 4400.0,
+        "id": "1",
+        "name": ""
+      },
+      "expect": [
+        {
+          "_tag": "TeamChat",
+          "contains": "Patrol Heli inbound near A0"
+        }
+      ]
     },
     {
       "name": "chinook",
       "world": {},
-      "event": { "kind": "chinook", "x": 2250.0, "y": 2250.0 },
-      "expect": [{ "_tag": "TeamChat", "contains": "Chinook spotted at P15" }]
+      "event": {
+        "kind": "chinook",
+        "x": 2250.0,
+        "y": 2250.0,
+        "id": "1",
+        "name": ""
+      },
+      "expect": [
+        {
+          "_tag": "TeamChat",
+          "contains": "Chinook spotted at P15"
+        }
+      ]
     }
   ]
 }

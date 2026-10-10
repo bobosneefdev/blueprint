@@ -62,3 +62,18 @@ test("reports fixture mismatches with what actually happened", () => {
     'expected [TeamChat~"bye"] got [TeamChat("hi 1")]',
   );
 });
+
+test("fixture events must use the real payload, no renamed or extra fields", async () => {
+  const cargo = await Bun.file(dir + "cargo-alert.json").json();
+
+  const withEvent = (event: Record<string, string | number>) =>
+    validate({ ...cargo, tests: [{ ...cargo.tests[0], event }] });
+
+  const nested = withEvent({ marker: "x" });
+  const extra = withEvent({ ...cargo.tests[0].event, extra: 1 });
+
+  expect(nested.ok ? "" : nested.problems[0]?.path).toBe(
+    'tests["announces cargo with grid"].event',
+  );
+  expect(extra.ok).toBe(false);
+});
