@@ -3,6 +3,7 @@
   import type { PageProps } from "./$types";
 
   let { data, form }: PageProps = $props();
+
   // Writable derived: follows saved settings, editable locally.
   let model = $derived(data.settings.model ?? "");
 </script>
