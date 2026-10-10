@@ -21,7 +21,30 @@ export interface Deps {
   readonly rpcUrl: string;
   /** Windows: import/mount the WSL sandbox. Throws with a user-facing reason if unavailable. */
   readonly prepareSandbox: () => void;
+  /** Runs the harness; injectable for tests. */
+  readonly run?: (
+    argv: string[],
+    env: Record<string, string>,
+  ) => Promise<{ stdout: string; exitCode: number }>;
 }
+
+const spawnHarness = async (argv: string[], env: Record<string, string>) => {
+  const proc = Bun.spawn(sandboxed(argv, env), {
+    stdout: "pipe",
+    stderr: "pipe",
+    env: { ...process.env, ...env },
+  });
+
+  const timeout = setTimeout(() => proc.kill(), 10 * 60_000);
+
+  try {
+    const [stdout, exitCode] = await Promise.all([new Response(proc.stdout).text(), proc.exited]);
+
+    return { stdout, exitCode };
+  } finally {
+    clearTimeout(timeout);
+  }
+};
 
 /** On Windows, every harness runs inside the locked-down distro as the agent user. */
 /** POSIX single-quote: the only safe way to pass arbitrary chat text through `sh -c`. */
@@ -56,6 +79,8 @@ export const sandboxed = (argv: string[], env: Record<string, string>) =>
 export const make = (deps: Deps) => {
   const queue = Agent.makeQueue();
 
+  const run = deps.run ?? spawnHarness;
+
   return async (steamId: string, name: string, text: string) => {
     const settings = deps.settings();
 
@@ -86,17 +111,7 @@ export const make = (deps: Deps) => {
 
       const env = { BOT_RPC_URL: deps.rpcUrl, BOT_RPC_TOKEN: token };
 
-      const proc = Bun.spawn(sandboxed(argv, env), {
-        stdout: "pipe",
-        stderr: "pipe",
-        env: { ...process.env, ...env },
-      });
-
-      const timeout = setTimeout(() => proc.kill(), 10 * 60_000);
-      const [stdout, exitCode] = await Promise.all([new Response(proc.stdout).text(), proc.exited]);
-
-      clearTimeout(timeout);
-      revoke();
+      const { stdout, exitCode } = await run(argv, env).finally(revoke);
 
       const reply = Harness.parse(kind, stdout, exitCode);
 
