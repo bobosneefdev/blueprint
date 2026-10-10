@@ -3,7 +3,11 @@ import type { Handle } from "@sveltejs/kit/hooks";
 import { bot } from "#lib/server/bot.ts";
 import * as Session from "#lib/server/session.ts";
 
-const PUBLIC = ["/auth/login", "/auth/callback"];
+// Matched on route ids, never on the raw pathname: SvelteKit decodes %-escapes when routing, so
+// "/p%61ir" reaches the /pair route while a pathname check would not match it.
+const PUBLIC = new Set(["/auth/login", "/auth/callback"]);
+
+const LOCAL_ONLY = new Set(["/pair", "/harness"]);
 
 /**
  * Requests through the tunnel always carry cf-connecting-ip (cloudflared sets it); the portal
@@ -22,17 +26,24 @@ export const handle: Handle = async ({ event, resolve }) => {
   event.locals.local = local;
 
   // First run and Rust+ sign-in happen on the host PC only; nobody can claim host remotely.
-  if (event.url.pathname === "/pair" || event.url.pathname === "/harness")
-    return local
-      ? resolve(event)
-      : new Response("Pairing is only available on the host PC.", { status: 403 });
+  const route = event.route.id ?? "";
+
+  if (LOCAL_ONLY.has(route)) {
+    if (!local) return new Response("Only available on the host PC.", { status: 403 });
+
+    // First run has no host yet; afterwards these need the host's own session too, so another
+    // local process (or a sandbox that reaches loopback) cannot use them anonymously.
+    if (b.pairing().hostSteamId !== "" && sid64 !== b.hostSteamId) redirect(303, "/auth/login");
+
+    return resolve(event);
+  }
 
   if (b.pairing().hostSteamId === "")
     return local
       ? redirect(303, "/pair")
       : new Response("Setup not finished on the host PC.", { status: 403 });
 
-  if (PUBLIC.includes(event.url.pathname)) return resolve(event);
+  if (PUBLIC.has(route)) return resolve(event);
 
   if (sid64 === undefined) redirect(303, "/auth/login");
 

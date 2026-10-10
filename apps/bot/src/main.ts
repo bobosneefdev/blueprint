@@ -7,6 +7,7 @@ import { type Plugin, Starters, Validate, type World } from "@better-rust/dsl";
 import { Effect, Ref, Schedule, Stream } from "effect";
 import { randomBytes } from "node:crypto";
 import { createServer } from "node:http";
+import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import * as AgentRunner from "./AgentRunner.ts";
 import * as Config from "./Config.ts";
@@ -23,6 +24,28 @@ const home = Config.dataDir();
 const db = Db.open(join(home, "better-rust.db"));
 
 const workspaceDir = join(home, "workspace");
+
+/** The only directory the agent can write. Plugins leave it only via propose -> confirm. */
+const agentShare = join(home, "agent-share");
+
+/** Fresh copy of active plugins for the agent to read/edit; old drafts are discarded per job. */
+const refreshAgentShare = async () => {
+  rmSync(agentShare, { recursive: true, force: true });
+  mkdirSync(join(agentShare, "plugins"), { recursive: true });
+
+  for (const l of Effect.runSync(Ref.get(pluginsRef)))
+    await Bun.write(
+      join(agentShare, "plugins", `${l.plugin.name}.json`),
+      `${JSON.stringify(l.plugin, null, 2)}\n`,
+    );
+
+  await Bun.write(join(agentShare, "AGENTS.md"), "Draft plugins in plugins/. Use the bot CLI.\n");
+};
+
+const prepareSandbox = async () => {
+  await refreshAgentShare();
+  Sandbox.prepare(home, agentShare);
+};
 
 const BOT_PREFIX = "[bot] ";
 
@@ -139,7 +162,7 @@ attach({
   pair: () => pair(),
   activity: () => activity,
   saveHarnessCredential: async (c) => {
-    Sandbox.prepare(home);
+    await prepareSandbox();
     HarnessAuth.save(c);
   },
   settings: () => ({
@@ -240,7 +263,7 @@ const runAgent = AgentRunner.make({
     return { token, revoke: () => void rpcTokens.delete(token) };
   },
   rpcUrl: `http://127.0.0.1:${config.rpcPort}`,
-  prepareSandbox: () => Sandbox.prepare(home),
+  prepareSandbox,
 });
 
 /** "@bot yes" / "@bot undo" are handled here; everything else goes to the harness. */

@@ -1,9 +1,12 @@
-// WSL agent sandbox lifecycle (Windows only). The distro has automount and interop off, so the
-// bot bind-mounts exactly two host paths in as root before any agent run:
-//   <home>\workspace           -> /workspace (rw)
-//   <home>\rust-items-json     -> /data/rust-items-json (ro)
-// Windows drives are reachable as 9p shares even with automount off; mounting them is root-only
-// and the agent user has no sudo.
+// WSL agent sandbox lifecycle (Windows only). The distro has automount and interop off. Before
+// each agent run, as root:
+//   <home>\agent-share  -> /workspace  (drvfs mount of that ONE directory, rw)
+//   <home>\rust-items-json\data -> copied into /data/rust-items-json/data (not mounted)
+//
+// Verified on a real WSL2 distro: a drvfs mount of a single Windows directory does not expose its
+// parent, but drvfs ignores `ro` for the agent, so game data is copied in instead of mounted.
+// agent-share holds only plugin files (no .git): the bot's git repo, config.json and the db are
+// never visible to the agent. See Workspace.ts for how files move between the two.
 import { join } from "node:path";
 
 export const DISTRO = "better-rust-agent";
@@ -35,35 +38,36 @@ export const ensure = (home: string) => {
   if (!r.ok) throw new Error(`wsl --import failed: ${r.err || r.out}`);
 };
 
-/** `C:\Users\x\AppData` -> `/mnt/host/c/Users/x/AppData` inside the distro (our own mount root). */
-export const toDistroPath = (windowsPath: string) => {
-  const m = /^([A-Za-z]):\\(.*)$/.exec(windowsPath);
+/** Single-quoted for sh; Windows paths can contain spaces (user names). */
+const q = (s: string) => `'${s.replaceAll("'", `'"'"'`)}'`;
 
-  if (!m?.[1]) throw new Error(`not an absolute Windows path: ${windowsPath}`);
-
-  return `/mnt/host/${m[1].toLowerCase()}/${(m[2] ?? "").replaceAll("\\", "/")}`;
-};
-
-/** Idempotent: mounts the drive share privately, then binds only the two paths the agent needs. */
-export const mountScript = (home: string) => {
-  const drive = home.slice(0, 1).toLowerCase();
-  const src = toDistroPath(home);
-
-  return [
+/** Idempotent setup script, run as root inside the distro before each agent job. */
+export const mountScript = (share: string, gameData: string) =>
+  [
     "set -e",
-    `mkdir -p /mnt/host/${drive}`,
-    `mountpoint -q /mnt/host/${drive} || mount -t drvfs ${drive.toUpperCase()}: /mnt/host/${drive} -o metadata,uid=1000,gid=1000`,
-    `mountpoint -q /workspace || mount --bind '${src}/workspace' /workspace`,
-    `mountpoint -q /data/rust-items-json || mount --bind -o ro '${src}/rust-items-json' /data/rust-items-json`,
-    // Hide the drive share from the agent: only root can traverse /mnt/host.
-    "chmod 700 /mnt/host",
+    // Leftover processes from a previous requester's job must not see this job's token.
+    "pkill -KILL -u agent 2>/dev/null || true",
+    `mountpoint -q /workspace || mount -t drvfs ${q(share)} /workspace -o metadata,uid=1000,gid=1000`,
+    "rm -rf /data/rust-items-json/data.tmp && mkdir -p /data/rust-items-json/data.tmp",
+    `mount -t drvfs ${q(gameData)} /mnt/gamedata -o ro 2>/dev/null || { mkdir -p /mnt/gamedata && mount -t drvfs ${q(gameData)} /mnt/gamedata -o ro; }`,
+    "cp -r /mnt/gamedata/. /data/rust-items-json/data.tmp/ && umount /mnt/gamedata",
+    "rm -rf /data/rust-items-json/data && mv /data/rust-items-json/data.tmp /data/rust-items-json/data",
+    "chown -R root:root /data/rust-items-json && chmod -R a+rX,go-w /data/rust-items-json",
   ].join("\n");
-};
 
-export const prepare = (home: string) => {
+export const prepare = (home: string, share: string) => {
   ensure(home);
 
-  const r = wsl("-d", DISTRO, "-u", "root", "--", "sh", "-c", mountScript(home));
+  const r = wsl(
+    "-d",
+    DISTRO,
+    "-u",
+    "root",
+    "--",
+    "sh",
+    "-c",
+    mountScript(share, join(home, "rust-items-json", "data")),
+  );
 
-  if (!r.ok) throw new Error(`sandbox mount failed: ${r.err || r.out}`);
+  if (!r.ok) throw new Error(`sandbox setup failed: ${r.err || r.out}`);
 };

@@ -1,5 +1,6 @@
-// The plugin workspace: a git repo the agent edits (mounted into WSL as /workspace).
-//   plugins/<name>.json         logic, validated before activation
+// The plugin workspace: a git repo owned by the bot. The agent never sees it: the agent drafts in a
+// separate share and plugins enter here only via propose -> validate -> requester confirms.
+//   plugins/<name>.json         active plugin logic
 //   servers/<id>/bindings.json  entity ids per server (reset on wipe)
 //   enabled.json                { "<name>": true|false }
 // Every activation/toggle/rollback is a commit, so history and undo come from git.
@@ -7,8 +8,23 @@ import { Validate, type Plugin } from "@better-rust/dsl";
 import { mkdirSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
+/** Repo config can never run code: no hooks, no fsmonitor, no external diff/textconv. */
+const HARDEN = [
+  "-c",
+  `core.hooksPath=${process.platform === "win32" ? "NUL" : "/dev/null"}`,
+  "-c",
+  "core.fsmonitor=false",
+  "-c",
+  "diff.external=",
+  "-c",
+  "protocol.allow=never",
+];
+
 const git = (dir: string, ...args: string[]) => {
-  const r = Bun.spawnSync(["git", "-C", dir, ...args], { stdout: "pipe", stderr: "pipe" });
+  const r = Bun.spawnSync(["git", ...HARDEN, "-C", dir, ...args], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
 
   if (r.exitCode !== 0) throw new Error(`git ${args[0]}: ${r.stderr.toString().trim()}`);
 
@@ -32,7 +48,7 @@ export const init = async (dir: string, starters: ReadonlyArray<Plugin> = []) =>
   for (const p of starters)
     await Bun.write(join(dir, "plugins", `${p.name}.json`), `${JSON.stringify(p, null, 2)}\n`);
 
-  await Bun.write(enabledPath(dir), `${JSON.stringify(enabled, null, 2)}\n`);
+  await writeEnabled(dir, enabled);
   commitAll(dir, "starter plugins");
 };
 
@@ -65,7 +81,8 @@ export const load = async (dir: string) => {
     .sort()) {
     const r = Validate.validate(await Bun.file(join(dir, "plugins", file)).json());
 
-    if (r.ok) loaded.push({ plugin: r.plugin, enabled: enabled[r.plugin.name] ?? true });
+    // Unknown plugins stay off: only activate()/setEnabled() turn things on.
+    if (r.ok) loaded.push({ plugin: r.plugin, enabled: enabled[r.plugin.name] ?? false });
     else invalid.push({ file, problems: r.problems });
   }
 
@@ -80,21 +97,24 @@ const commitAll = (dir: string, message: string) => {
   if (git(dir, "status", "--porcelain").trim() !== "") git(dir, "commit", "-q", "-m", message);
 };
 
-/** Writes and commits a validated plugin. Returns the commit hash. */
+/** Writes, enables and commits a validated plugin. Returns the commit hash. */
 export const activate = async (dir: string, plugin: Plugin, by: string) => {
   await Bun.write(
     join(dir, "plugins", `${plugin.name}.json`),
     `${JSON.stringify(plugin, null, 2)}\n`,
   );
+  await writeEnabled(dir, { ...(await readEnabled(dir)), [plugin.name]: true });
   commitAll(dir, `activate ${plugin.name} v${plugin.version} (by ${by})`);
 
   return git(dir, "rev-parse", "HEAD").trim();
 };
 
-export const setEnabled = async (dir: string, name: string, on: boolean, by: string) => {
-  const enabled = await readEnabled(dir);
+const writeEnabled = (dir: string, enabled: Record<string, boolean>) =>
+  Bun.write(enabledPath(dir), `${JSON.stringify(enabled, null, 2)}\n`);
 
-  await Bun.write(enabledPath(dir), `${JSON.stringify({ ...enabled, [name]: on }, null, 2)}\n`);
+export const setEnabled = async (dir: string, name: string, on: boolean, by: string) => {
+  assertName(name);
+  await writeEnabled(dir, { ...(await readEnabled(dir)), [name]: on });
   commitAll(dir, `${on ? "enable" : "disable"} ${name} (by ${by})`);
 };
 
@@ -106,14 +126,26 @@ export interface Commit {
 
 const COMMIT = /^[0-9a-f]{7,40}$/;
 
+const NAME = /^[a-z][a-z0-9-]{1,31}$/;
+
+/** Plugin names reach git pathspecs; only DSL-valid names are allowed. */
+const assertName = (name: string) => {
+  if (!NAME.test(name)) throw new Error("bad plugin name");
+};
+
 /** Unified diff of one plugin file introduced by `commit`. */
 export const diff = (dir: string, name: string, commit: string) => {
+  assertName(name);
+
   if (!COMMIT.test(commit)) throw new Error("bad commit");
 
   return git(dir, "show", "--format=", "--no-color", commit, "--", `plugins/${name}.json`);
 };
 
 export const history = (dir: string, name: string): Commit[] =>
+  NAME.test(name) ? historyOf(dir, name) : [];
+
+const historyOf = (dir: string, name: string): Commit[] =>
   git(dir, "log", "--format=%H%x09%cI%x09%s", "--", `plugins/${name}.json`)
     .split("\n")
     .flatMap((line) => {
@@ -124,6 +156,10 @@ export const history = (dir: string, name: string): Commit[] =>
 
 /** Restores one plugin file to its state at `commit`, as a new commit (history is never rewritten). */
 export const rollback = (dir: string, name: string, commit: string, by: string) => {
+  assertName(name);
+
+  if (!COMMIT.test(commit)) throw new Error("bad commit");
+
   git(dir, "checkout", commit, "--", `plugins/${name}.json`);
   commitAll(dir, `restore ${name} to ${commit.slice(0, 7)} (by ${by})`);
 };

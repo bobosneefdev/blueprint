@@ -20,7 +20,7 @@ export interface Deps {
   };
   readonly rpcUrl: string;
   /** Windows: import/mount the WSL sandbox. Throws with a user-facing reason if unavailable. */
-  readonly prepareSandbox: () => void;
+  readonly prepareSandbox: () => Promise<void>;
   /** Runs the harness; injectable for tests. */
   readonly run?: (
     argv: string[],
@@ -95,7 +95,7 @@ export const make = (deps: Deps) => {
     try {
       await deps.chat(`${name}: on it…`);
 
-      if (process.platform === "win32") deps.prepareSandbox();
+      if (process.platform === "win32") await deps.prepareSandbox();
 
       const { kind, model } = deps.harness();
       const { token, revoke } = deps.issueRpcToken(steamId);

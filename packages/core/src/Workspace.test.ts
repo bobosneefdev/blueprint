@@ -34,6 +34,9 @@ test("activate, toggle, history, rollback, undo", async () => {
     "activate pop v1 (by host)",
   ]);
 
+  expect(() => Workspace.rollback(dir, "*", h[1]!.commit, "host")).toThrow();
+  expect(() => Workspace.rollback(dir, "../enabled", h[1]!.commit, "host")).toThrow();
+
   await Workspace.setEnabled(dir, "pop", false, "host");
   expect((await Workspace.load(dir)).loaded.map((l) => [l.plugin.name, l.enabled])).toEqual([
     ["pop", false],
@@ -76,4 +79,21 @@ test("first run seeds starters; device plugins start disabled", async () => {
     ["pop", true],
   ]);
   expect(Workspace.history(dir, "pop")[0]?.message).toBe("starter plugins");
+});
+
+test("files dropped into plugins/ without activate() stay disabled; hooks never run", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "br-ws-"));
+  const pop = await starter("pop");
+
+  await Workspace.init(dir);
+  await Bun.write(join(dir, "plugins", "pop.json"), JSON.stringify(pop));
+  await Bun.write(join(dir, ".git", "hooks", "pre-commit"), "#!/bin/sh\ntouch pwned\n");
+  Bun.spawnSync(["chmod", "+x", join(dir, ".git", "hooks", "pre-commit")]);
+
+  expect((await Workspace.load(dir)).loaded.map((l) => l.enabled)).toEqual([false]);
+
+  await Workspace.activate(dir, pop, "host");
+
+  expect((await Workspace.load(dir)).loaded.map((l) => l.enabled)).toEqual([true]);
+  expect(await Bun.file(join(dir, "pwned")).exists()).toBe(false);
 });

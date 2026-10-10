@@ -11,7 +11,16 @@ export type Credential =
   | { readonly harness: "codex"; readonly kind: "apiKey"; readonly value: string }
   | { readonly harness: "pi"; readonly envVar: string; readonly value: string };
 
-const ENV_VAR = /^[A-Z][A-Z0-9_]{2,40}$/;
+/** Provider keys Pi understands. An allowlist: NODE_OPTIONS / PATH / BASH_ENV would be code exec. */
+export const PI_ENV_VARS = [
+  "OPENROUTER_API_KEY",
+  "ANTHROPIC_API_KEY",
+  "OPENAI_API_KEY",
+  "GEMINI_API_KEY",
+];
+
+/** Real tokens and API keys are base64url-ish; anything else is rejected, not escaped. */
+const SAFE_VALUE = /^[A-Za-z0-9._~+/=-]{8,512}$/;
 
 /** Shell-free: the secret goes over stdin, never argv (argv is visible to other processes). */
 const asAgent = (script: string, stdin: string) => {
@@ -37,16 +46,19 @@ const asAgent = (script: string, stdin: string) => {
   return r.stdout.toString();
 };
 
-/** Env file sourced by the harness launch; one `export K=V` per line, agent-readable only. */
+/**
+ * Env file sourced by the harness launch: `export NAME='value'` per line, agent-readable only.
+ * NAME is from a fixed set and value matches SAFE_VALUE, so neither can carry shell syntax.
+ */
 const writeEnv = (name: string, value: string) =>
   asAgent(
     `umask 077; touch ~/.harness-env; grep -v '^export ${name}=' ~/.harness-env > ~/.harness-env.tmp; ` +
-      `printf 'export ${name}=%s\\n' "$(cat)" >> ~/.harness-env.tmp; mv ~/.harness-env.tmp ~/.harness-env`,
+      `printf "export ${name}='%s'\\n" "$(cat)" >> ~/.harness-env.tmp; mv ~/.harness-env.tmp ~/.harness-env`,
     value,
   );
 
 export const save = (c: Credential) => {
-  if (/[\r\n'"$`\\]/.test(c.value)) throw new Error("credential contains invalid characters");
+  if (!SAFE_VALUE.test(c.value)) throw new Error("that doesn't look like a token or API key");
 
   switch (c.harness) {
     case "claude":
@@ -57,7 +69,7 @@ export const save = (c: Credential) => {
     case "codex":
       return asAgent("codex login --with-api-key", c.value);
     case "pi":
-      if (!ENV_VAR.test(c.envVar)) throw new Error("invalid provider variable");
+      if (!PI_ENV_VARS.includes(c.envVar)) throw new Error("unsupported provider");
 
       return writeEnv(c.envVar, c.value);
   }

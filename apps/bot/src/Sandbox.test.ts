@@ -1,18 +1,16 @@
 import { expect, test } from "bun:test";
-import { mountScript, toDistroPath } from "./Sandbox.ts";
+import { mountScript } from "./Sandbox.ts";
 
-test("windows paths map under the private mount root", () => {
-  expect(toDistroPath("C:\\Users\\Jake\\AppData\\Local\\better-rust")).toBe(
-    "/mnt/host/c/Users/Jake/AppData/Local/better-rust",
+test("mounts only the share dir; copies game data; never mounts a whole drive", () => {
+  const s = mountScript(
+    "C:\\Users\\Jo O'Neil\\AppData\\Local\\better-rust\\agent-share",
+    "C:\\Users\\Jo O'Neil\\AppData\\Local\\better-rust\\rust-items-json\\data",
   );
-  expect(() => toDistroPath("relative\\path")).toThrow();
-});
 
-test("mount script binds only workspace (rw) and game data (ro), then hides the drive", () => {
-  const s = mountScript("D:\\br");
-
-  expect(s).toContain("mount -t drvfs D: /mnt/host/d");
-  expect(s).toContain("mount --bind '/mnt/host/d/br/workspace' /workspace");
-  expect(s).toContain("mount --bind -o ro '/mnt/host/d/br/rust-items-json' /data/rust-items-json");
-  expect(s.trim().endsWith("chmod 700 /mnt/host")).toBe(true);
+  expect(s).toContain(
+    `mount -t drvfs 'C:\\Users\\Jo O'"'"'Neil\\AppData\\Local\\better-rust\\agent-share' /workspace`,
+  );
+  expect(s).toContain("cp -r /mnt/gamedata/. /data/rust-items-json/data.tmp/");
+  expect(s).toContain("pkill -KILL -u agent");
+  expect(s).not.toMatch(/drvfs [A-Z]: /);
 });
