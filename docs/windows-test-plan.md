@@ -3,6 +3,12 @@
 Everything below needs a real Windows 10/11 x64 machine with virtualization enabled. Linux CI and
 the cross-checks cover the rest (see SPEC.md). Run in order; each step lists what proves it.
 
+Already verified on the Windows 11 VM (2026-10-10), see SPEC.md: all test suites natively, the
+compiled sidecar booting, WSL2 sandbox isolation (drives, interop, sudo, egress, DNS, loopback),
+and the sandboxed `bot` CLI reaching the real bot RPC. Still needs a person: §2 (Steam sign-in
+window + in-game pairing), §4 (live agent in chat, needs your harness credential via /harness),
+§5 (tray + NSIS installer), §6 (toast/phone).
+
 ## 0. Build artifacts locally (until the release workflow has run once)
 
 ```powershell
@@ -37,8 +43,8 @@ Sandbox image (needs Docker, or use the release artifact):
 - `/harness` → paste a Claude token (`claude setup-token`) or API key → "Saved to the sandbox".
 - `wsl -l -v` shows `better-rust-agent` (version 2).
 - Escape checks, inside `wsl -d better-rust-agent -u agent`:
-  - `ls /mnt` shows no drives; `ls /mnt/host` → permission denied.
-  - `cat /workspace/../config.json` → not found (only workspace is bound).
+  - `ls /mnt` shows no drives.
+  - `ls /workspace/..` shows the distro root, not the Windows data dir (only agent-share is mounted).
   - `curl -m5 https://example.com` → fails; `curl -m5 https://api.anthropic.com` → connects.
   - `cmd.exe` → not found (interop off).
   - `sudo` → not found.
