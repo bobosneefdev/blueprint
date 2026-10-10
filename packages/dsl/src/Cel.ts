@@ -1,6 +1,6 @@
 // CEL environment for plugin expressions. Rows are registered as classes so field typos fail at
 // `check` time (validate), not at runtime in the middle of a raid.
-import { Environment } from "@marcbachmann/cel-js";
+import { type ASTNode, Environment } from "@marcbachmann/cel-js";
 import { Predicate, Schema } from "effect";
 import { Value, type ValueMap } from "./Plugin.ts";
 import type { Marker, Member, World } from "./World.ts";
@@ -126,44 +126,38 @@ const firstLine = (e: Error) => e.message.split("\n")[0] ?? "";
 /** Static check: syntax + types. Returns an error message or undefined. */
 const MACROS = new Set(["all", "exists", "exists_one", "map", "filter"]);
 
-/**
- * cel-js AST (untyped upstream): nodes are `{ op, args }` where args is a scalar, a node, or an
- * array of those; a method call is `{ op: "rcall", args: [name, target, callArgs] }`.
- */
-type Ast = string | number | bigint | boolean | null | undefined | AstNode | ReadonlyArray<Ast>;
-
-interface AstNode {
-  readonly op: string;
-  readonly args?: Ast;
-}
-
-const isNode = (v: Ast): v is AstNode => Predicate.isObject(v) && !Array.isArray(v) && "op" in v;
-
-const children = (v: Ast): ReadonlyArray<Ast> => (Array.isArray(v) ? v : isNode(v) ? [v.args] : []);
-
-const isCall = (v: Ast): v is AstNode => isNode(v) && v.op === "rcall";
-
-/** Deepest nesting of comprehension macros, from the parsed AST (comments/strings can't fool it). */
-const macroDepth = (v: Ast): number => {
-  const self = isCall(v) && Array.isArray(v.args) && MACROS.has(String(v.args[0])) ? 1 : 0;
-
-  return (
-    self +
-    Math.max(
-      0,
-      ...children(v)
-        .flatMap((c) => (Array.isArray(c) ? c : [c]))
-        .map(macroDepth),
-    )
-  );
+/** Child nodes of a cel-js AST node (typed upstream as a discriminated union on `op`). */
+const kids = (n: ASTNode): ReadonlyArray<ASTNode> => {
+  switch (n.op) {
+    case "value":
+    case "id":
+      return [];
+    case ".":
+    case ".?":
+      return [n.args[0]];
+    case "call":
+      return n.args[1];
+    case "rcall":
+      return [n.args[1], ...n.args[2]];
+    case "list":
+      return n.args;
+    case "map":
+      return n.args.flat();
+    case "!_":
+    case "-_":
+      return [n.args];
+    default:
+      return n.args;
+  }
 };
 
+/** Deepest nesting of comprehension macros, from the parsed AST (comments/strings can't fool it). */
+const macroDepth = (n: ASTNode): number =>
+  (n.op === "rcall" && MACROS.has(n.args[0]) ? 1 : 0) + Math.max(0, ...kids(n).map(macroDepth));
+
 /** Total `+` operators anywhere; list concatenation multiplies comprehension cost. */
-const plusCount = (v: Ast): number =>
-  (isNode(v) && v.op === "+" ? 1 : 0) +
-  children(v)
-    .flatMap((c) => (Array.isArray(c) ? c : [c]))
-    .reduce((n: number, c) => n + plusCount(c), 0);
+const plusCount = (n: ASTNode): number =>
+  (n.op === "+" ? 1 : 0) + kids(n).reduce((sum, c) => sum + plusCount(c), 0);
 
 /**
  * Evaluation is synchronous on the bot's only thread, so cost must be bounded statically.
@@ -172,8 +166,7 @@ const plusCount = (v: Ast): number =>
 const costProblem = (expr: string): string | undefined => {
   if (expr.length > 500) return "expression longer than 500 characters";
 
-  // SAFETY: cel-js parse() returns its AST typed as any; Ast describes its documented shape.
-  let ast: Ast;
+  let ast: ASTNode;
 
   try {
     ast = base.parse(expr).ast;
