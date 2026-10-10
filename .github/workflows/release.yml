@@ -40,6 +40,12 @@ jobs:
           bun-version-file: package.json
       - uses: dtolnay/rust-toolchain@stable
       - run: bun install --frozen-lockfile
+      - name: updater key configured
+        shell: bash
+        run: |
+          if grep -q REPLACE_WITH_TAURI_SIGNER_PUBLIC_KEY apps/desktop/src-tauri/tauri.conf.json; then
+            echo "::error::Set plugins.updater.pubkey in tauri.conf.json (see docs/release-setup.md)"; exit 1
+          fi
       - name: portal
         run: cd apps/portal && bun run build
       - name: sidecar
