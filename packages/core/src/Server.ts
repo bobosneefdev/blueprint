@@ -23,6 +23,8 @@ export interface Options {
   /** Team chat lines starting with this prefix (e.g. "@bot") go to the agent, not plugins. */
   readonly onAgentMessage: (steamId: string, name: string, text: string) => Effect.Effect<void>;
   readonly notify: (text: string, channel: "toast" | "phone" | "both") => Effect.Effect<void>;
+  /** Entity ids are reset by a wipe; the owner clears this server's bindings. */
+  readonly onWipe: () => Effect.Effect<void>;
   readonly isAgentMessage: (text: string) => boolean;
   /** Our own chat lines echo back as broadcasts; skip them so plugins never react to the bot. */
   readonly botPrefix: string;
@@ -59,7 +61,15 @@ export const run = (opts: Options) =>
     });
 
     const feed = Effect.fn("Server.feed")(function* (input: Runtime.Input) {
-      const plugins = yield* Ref.get(opts.plugins);
+      const bound = new Set((yield* Ref.get(opts.bindings)).map((b) => b.name));
+
+      // Plugins whose device bindings are not paired on this server are paused here.
+      const plugins = (yield* Ref.get(opts.plugins)).map((p) =>
+        p.plugin.bindings.every((b) => b.kind === "location" || bound.has(b.name))
+          ? p
+          : { ...p, enabled: false },
+      );
+
       const r = Runtime.step(plugins, input, state);
 
       for (const f of r.failures) yield* Effect.logWarning("plugin failed", f);
@@ -112,7 +122,10 @@ export const run = (opts: Options) =>
         for (const event of Snapshot.diff(prev, next)) {
           Db.record(db, serverId, next.now, "event", JSON.stringify(event));
 
-          if (event.kind === "wipe") Db.wipeRecordings(db, serverId);
+          if (event.kind === "wipe") {
+            Db.wipeRecordings(db, serverId);
+            yield* opts.onWipe();
+          }
 
           yield* feed(Runtime.Input.Event({ world: next, event }));
         }

@@ -86,6 +86,7 @@ test("poll -> diff -> plugin -> team chat, end to end over a websocket", async (
           bindings: yield* Ref.make<ReadonlyArray<Server.Binding>>([]),
           onAgentMessage: () => Effect.void,
           notify: () => Effect.void,
+          onWipe: () => Effect.void,
           isAgentMessage: () => false,
           botPrefix: "[bot] ",
           pollSeconds: 0.05,

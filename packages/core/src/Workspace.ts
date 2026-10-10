@@ -62,6 +62,8 @@ export const load = async (dir: string) => {
   return { loaded, invalid };
 };
 
+export const commit = (dir: string, message: string) => commitAll(dir, message);
+
 const commitAll = (dir: string, message: string) => {
   git(dir, "add", "-A");
 

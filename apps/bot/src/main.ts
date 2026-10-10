@@ -2,7 +2,7 @@
 //   portal  127.0.0.1:portalPort  -> exposed via Cloudflare quick tunnel, Steam-login gated
 //   rpc     127.0.0.1:rpcPort     -> `bot` CLI inside WSL (mirrored networking), token-gated
 //   servers one Rust+ websocket per paired server, plugin runtime + recorder
-import { Db, Pairing, Rpc, RustPlus, Server, Tunnel, Workspace } from "@better-rust/core";
+import { Bindings, Db, Pairing, Rpc, RustPlus, Server, Tunnel, Workspace } from "@better-rust/core";
 import type { Plugin, World } from "@better-rust/dsl";
 import { Effect, Ref, Schedule, Stream } from "effect";
 import { randomBytes } from "node:crypto";
@@ -112,7 +112,7 @@ Bun.serve({
   fetch: Rpc.handler({
     requesterFor: (token) => rpcTokens.get(token),
     world: (id) => worlds.get(anyServer(id) ?? ""),
-    bindings: () => [],
+    bindings: (id) => Effect.runSync(Ref.get(bindingRef(anyServer(id) ?? ""))),
     recorded: (id, from) => Db.recorded(db, anyServer(id) ?? "", from),
     propose: async (requester, r) => {
       pending.set(requester, r.plugin);
@@ -176,6 +176,30 @@ const onAgentMessage = async (steamId: string, name: string, text: string) => {
 };
 
 // ── Servers ──────────────────────────────────────────────────────────────────────────────────────
+/** Per-server device bindings, loaded from the workspace and updated by pair notifications. */
+const bindingRefs = new Map<string, Ref.Ref<ReadonlyArray<Server.Binding>>>();
+
+const bindingRef = (serverId: string) => {
+  const existing = bindingRefs.get(serverId);
+
+  if (existing) return existing;
+
+  const ref = Effect.runSync(Ref.make<ReadonlyArray<Server.Binding>>([]));
+
+  bindingRefs.set(serverId, ref);
+  void Bindings.read(workspaceDir, serverId).then((f) =>
+    Effect.runSync(Ref.set(ref, Bindings.forServer(f))),
+  );
+
+  return ref;
+};
+
+const saveBindings = async (serverId: string, file: Bindings.File, message: string) => {
+  await Bindings.write(workspaceDir, serverId, file);
+  Workspace.commit(workspaceDir, message);
+  Effect.runSync(Ref.set(bindingRef(serverId), Bindings.forServer(file)));
+};
+
 const runServer = (s: Db.ServerRow) =>
   Effect.scoped(
     Effect.gen(function* () {
@@ -199,7 +223,11 @@ const runServer = (s: Db.ServerRow) =>
         db,
         rp,
         plugins: pluginsRef,
-        bindings: yield* Ref.make<ReadonlyArray<Server.Binding>>([]),
+        bindings: bindingRef(s.id),
+        onWipe: () =>
+          Effect.promise(() =>
+            saveBindings(s.id, { devices: [], bindings: {} }, `wipe ${s.name}: reset bindings`),
+          ),
         onAgentMessage: (id, name, text) => Effect.promise(() => onAgentMessage(id, name, text)),
         notify: (text) => Effect.sync(() => console.log(`[notify] ${text}`)),
         isAgentMessage: (text) => new RegExp(`^\\s*@${config.botName}\\b`, "i").test(text),
@@ -244,7 +272,27 @@ const listenForPairs = () => {
       };
       void Config.save(config);
 
-      if (n.type !== "server") return;
+      if (n.type === "entity") {
+        const kind = Bindings.kindOf(n.entityType);
+
+        if (kind === undefined) return;
+
+        const plugins = Effect.runSync(Ref.get(pluginsRef)).map((l) => l.plugin);
+
+        void Bindings.read(workspaceDir, n.id).then((f) =>
+          saveBindings(
+            n.id,
+            Bindings.addDevice(
+              f,
+              { entityId: n.entityId, kind, label: n.entityName ?? kind },
+              plugins,
+            ),
+            `pair ${kind} ${n.entityId}`,
+          ),
+        );
+
+        return;
+      }
 
       const row = {
         id: n.id,
