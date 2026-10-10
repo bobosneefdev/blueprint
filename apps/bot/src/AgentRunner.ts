@@ -11,8 +11,11 @@ export interface Deps {
   /** Per-requester harness session id. */
   readonly sessions: Map<string, string>;
   readonly replies: Map<string, string>;
-  /** Token for the `bot` CLI inside the sandbox for this run. */
-  readonly rotateRpcToken: () => string;
+  /** Issues a token for the `bot` CLI tied to this requester; revoke when the job ends. */
+  readonly issueRpcToken: (steamId: string) => {
+    readonly token: string;
+    readonly revoke: () => void;
+  };
   readonly rpcUrl: string;
   /** Windows: import/mount the WSL sandbox. Throws with a user-facing reason if unavailable. */
   readonly prepareSandbox: () => void;
@@ -56,7 +59,7 @@ export const make = (deps: Deps) => {
       if (process.platform === "win32") deps.prepareSandbox();
 
       const { kind, model } = deps.harness();
-      const token = deps.rotateRpcToken();
+      const { token, revoke } = deps.issueRpcToken(steamId);
       const previous = deps.sessions.get(steamId);
 
       const argv = Harness.argv({
@@ -79,6 +82,7 @@ export const make = (deps: Deps) => {
       const [stdout, exitCode] = await Promise.all([new Response(proc.stdout).text(), proc.exited]);
 
       clearTimeout(timeout);
+      revoke();
 
       const reply = Harness.parse(kind, stdout, exitCode);
 

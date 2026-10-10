@@ -61,7 +61,8 @@ const pending = new Map<string, Plugin>();
 
 let publicUrl = `http://127.0.0.1:${config.portalPort}`;
 
-let rpcToken = randomBytes(24).toString("base64url");
+/** token -> requester SID64, live only while that requester's agent job runs. */
+const rpcTokens = new Map<string, string>();
 
 const anyServer = (id: string | undefined) => id ?? [...worlds.keys()][0];
 
@@ -109,13 +110,11 @@ Bun.serve({
   hostname: "127.0.0.1",
   port: config.rpcPort,
   fetch: Rpc.handler({
-    token: () => rpcToken,
+    requesterFor: (token) => rpcTokens.get(token),
     world: (id) => worlds.get(anyServer(id) ?? ""),
     bindings: () => [],
     recorded: (id, from) => Db.recorded(db, anyServer(id) ?? "", from),
-    propose: async (r) => {
-      const requester = [...sessions.keys()].at(-1) ?? config.hostSteamId;
-
+    propose: async (requester, r) => {
       pending.set(requester, r.plugin);
       await chatAll(
         `${r.plugin.name}: ${r.plugin.description}`.slice(0, 120) +
@@ -139,7 +138,13 @@ const runAgent = AgentRunner.make({
   chat: chatAll,
   sessions,
   replies,
-  rotateRpcToken: () => (rpcToken = randomBytes(24).toString("base64url")),
+  issueRpcToken: (steamId) => {
+    const token = randomBytes(24).toString("base64url");
+
+    rpcTokens.set(token, steamId);
+
+    return { token, revoke: () => void rpcTokens.delete(token) };
+  },
   rpcUrl: `http://127.0.0.1:${config.rpcPort}`,
   prepareSandbox: () => Sandbox.prepare(home),
 });

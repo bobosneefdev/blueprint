@@ -1,11 +1,12 @@
 // HTTP API the sandboxed `bot` CLI talks to. Bound to the WSL-facing interface only, bearer-token
-// authenticated (one token per agent session, rotated per run). Everything is JSON.
+// authenticated with a per-job token that also identifies who asked. Everything is JSON.
 import { Validate, type World } from "@better-rust/dsl";
 import { Option, Schema } from "effect";
 import * as Replay from "./Replay.ts";
 
 export interface Deps {
-  readonly token: () => string;
+  /** Bearer token -> requester SID64. One token per running agent job. */
+  readonly requesterFor: (token: string) => string | undefined;
   readonly world: (server: string | undefined) => World | undefined;
   readonly bindings: (server: string | undefined) => ReadonlyArray<{ name: string; kind: string }>;
   readonly recorded: (
@@ -13,7 +14,7 @@ export interface Deps {
     fromSeconds: number,
   ) => ReadonlyArray<Replay.Recorded>;
   /** Posts the confirm prompt to team chat; resolves when queued, not when confirmed. */
-  readonly propose: (plugin: Validate.Result & { ok: true }) => Promise<string>;
+  readonly propose: (requester: string, plugin: Validate.Result & { ok: true }) => Promise<string>;
 }
 
 const json: (status: number, body: Parameters<typeof Response.json>[0]) => Response = (
@@ -45,8 +46,10 @@ const pluginFrom = async (req: Request) =>
 export const handler =
   (deps: Deps) =>
   async (req: Request): Promise<Response> => {
-    if (req.headers.get("authorization") !== `Bearer ${deps.token()}`)
-      return json(401, { error: "unauthorized" });
+    const token = /^Bearer (.+)$/.exec(req.headers.get("authorization") ?? "")?.[1];
+    const requester = token === undefined ? undefined : deps.requesterFor(token);
+
+    if (requester === undefined) return json(401, { error: "unauthorized" });
 
     const url = new URL(req.url);
     const server = url.searchParams.get("server") ?? undefined;
@@ -83,7 +86,7 @@ export const handler =
 
         if (!result.ok) return json(422, { problems: result.problems });
 
-        return json(200, { status: await deps.propose(result) });
+        return json(200, { status: await deps.propose(requester, result) });
       }
 
       default:

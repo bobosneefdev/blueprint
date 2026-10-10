@@ -8,14 +8,14 @@ const serve = () => {
   const proposed: string[] = [];
 
   const h = handler({
-    token: () => "t0k",
+    requesterFor: (t) => (t === "t0k" ? "76561198000000001" : undefined),
     world: () => ({ ...Validate.emptyWorld, now: 100 }),
     bindings: () => [],
     recorded: () => [
       { at: 100, kind: "world", json: JSON.stringify({ ...Validate.emptyWorld, now: 100 }) },
     ],
-    propose: async (r) => {
-      proposed.push(r.plugin.name);
+    propose: async (who, r) => {
+      proposed.push(`${who}:${r.plugin.name}`);
 
       return "awaiting confirmation";
     },
@@ -44,7 +44,7 @@ test("live data, dry-run and propose", async () => {
   expect(await (await post("/v1/propose", { plugin })).json()).toEqual({
     status: "awaiting confirmation",
   });
-  expect(s.proposed).toEqual(["pop"]);
+  expect(s.proposed).toEqual(["76561198000000001:pop"]);
 });
 
 test("parseDuration", () => {
