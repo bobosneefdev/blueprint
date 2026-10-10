@@ -13,7 +13,10 @@
       <div class="card-body gap-3">
         <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 class="card-title">{p.name} <span class="badge badge-sm">{p.trigger}</span></h2>
+            <h2 class="card-title">
+              {p.name} <span class="badge badge-sm">{p.trigger}</span>
+              <a class="btn btn-ghost btn-xs" href="/plugins/{p.name}/export.json" download>Export</a>
+            </h2>
             <p class="text-base-content/70">{p.description}</p>
           </div>
           <form method="POST" action="?/toggle" use:enhance>
