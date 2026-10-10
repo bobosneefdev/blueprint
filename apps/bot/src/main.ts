@@ -215,9 +215,14 @@ createServer(handler)
   .listen(config.portalPort, "127.0.0.1");
 
 // ── RPC for the sandboxed CLI ────────────────────────────────────────────────────────────────────
+// Windows: listen on the WSL vEthernet address so the sandbox can reach us; never 0.0.0.0 (LAN).
+// The WSL adapter exists once WSL has started any distro; before the sandbox is set up, loopback
+// is fine (no agent can run yet). Restart picks up the adapter.
+const rpcHost = (process.platform === "win32" && Sandbox.hostAddress()) || "127.0.0.1";
+
 const rpcServe = () =>
   Bun.serve({
-    hostname: "127.0.0.1",
+    hostname: rpcHost,
     port: config.rpcPort,
     fetch: Rpc.handler({
       requesterFor: (token) => rpcTokens.get(token),
@@ -262,7 +267,7 @@ const runAgent = AgentRunner.make({
 
     return { token, revoke: () => void rpcTokens.delete(token) };
   },
-  rpcUrl: `http://127.0.0.1:${config.rpcPort}`,
+  rpcUrl: `http://${rpcHost}:${config.rpcPort}`,
   prepareSandbox,
 });
 

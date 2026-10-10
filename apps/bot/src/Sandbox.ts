@@ -38,6 +38,26 @@ export const ensure = (home: string) => {
   if (!r.ok) throw new Error(`wsl --import failed: ${r.err || r.out}`);
 };
 
+/**
+ * The bot RPC must be reachable from the distro but not from the LAN. WSL2 NAT puts Windows on a
+ * vEthernet "WSL" adapter (the distro's default gateway); bind the RPC server to that address
+ * only. Returns undefined when WSL is not up yet (caller falls back to loopback).
+ */
+export const hostAddress = () => {
+  const r = Bun.spawnSync(
+    [
+      "powershell.exe",
+      "-NoProfile",
+      "-Command",
+      "(Get-NetIPAddress -AddressFamily IPv4 | Where-Object InterfaceAlias -like '*WSL*' | Select-Object -First 1).IPAddress",
+    ],
+    { stdout: "pipe", stderr: "ignore" },
+  );
+  const ip = r.stdout.toString().trim();
+
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(ip) ? ip : undefined;
+};
+
 /** Single-quoted for sh; Windows paths can contain spaces (user names). */
 const q = (s: string) => `'${s.replaceAll("'", `'"'"'`)}'`;
 
