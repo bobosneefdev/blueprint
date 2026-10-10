@@ -97,7 +97,10 @@ attach({
   pair: () => pair(),
 });
 
-const { handler } = await import(join(import.meta.dir, "../../portal/build/handler.js"));
+// Packaged: Tauri passes the bundled portal dir. Dev: the sibling app's build output.
+const portalDir = process.env.BETTER_RUST_PORTAL ?? join(import.meta.dir, "../../portal/build");
+
+const { handler } = await import(join(portalDir, "handler.js"));
 
 createServer(handler).listen(config.portalPort, "127.0.0.1");
 

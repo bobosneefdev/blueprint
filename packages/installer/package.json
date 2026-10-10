@@ -1,0 +1,5 @@
+{
+  "name": "@better-rust/installer",
+  "private": true,
+  "type": "module"
+}

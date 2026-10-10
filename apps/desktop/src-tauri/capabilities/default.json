@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "No webview windows; the tray drives everything from Rust.",
+  "windows": [],
+  "permissions": ["core:default"]
+}
