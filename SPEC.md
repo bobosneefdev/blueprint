@@ -158,6 +158,16 @@ tools/oxlint/anti-slop  vendored lint rules
 - Vendor `rustplus.proto` with `required` → `optional`.
 - Detect Rust+ auth token expiry (~2 weeks) and prompt re-login.
 
+## Agent quality (measured 2026-10-10, real harness runs against the bot CLI)
+
+- Sonnet-class: correct on raid/craft Q&A (3/3, 2-3 turns, ~$0.04), writes valid plugins first try
+  once `bot schema` exposes event payloads, and refuses impossible requests (enemy inventories)
+  while offering a heuristic plugin with `heuristic` filled in.
+- Haiku-class: unreliable on Q&A (1/3 correct, 2-41 turns, recomputed numbers instead of using
+  `bot raid`). Do not default to small models; warn in settings when one is chosen.
+- Fixture payload enforcement was added after a real run produced a passing plugin that read a
+  field the server never sends.
+
 ## Open
 
 - Project name (codename `better-rust`).

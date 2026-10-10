@@ -34,6 +34,10 @@ const readJson = (path: string) =>
     catch: (e) => `cannot read ${path}: ${String(e)}`,
   });
 
+/** Game data errors are expected (not synced yet); report them as a plain message, no stack. */
+const loadData = <A>(load: () => Promise<A>) =>
+  Effect.tryPromise({ try: load, catch: (e) => (e instanceof Error ? e.message : String(e)) });
+
 const schema = Command.make("schema", {}, () => print(Validate.jsonSchema())).pipe(
   Command.withDescription("Print the plugin JSON Schema"),
 );
@@ -53,9 +57,8 @@ const items = Command.make(
   { query: Argument.String("query"), limit: Flag.Int("limit").pipe(Flag.withDefault(5)) },
   ({ query, limit }) =>
     Effect.gen(function* () {
-      const all = yield* Effect.promise(async () =>
-        Items.loadItems(await Effect.runPromise(dataDir)),
-      );
+      const dir = yield* dataDir;
+      const all = yield* loadData(() => Items.loadItems(dir));
 
       yield* print(Items.search(all, query, limit));
     }),
@@ -65,7 +68,7 @@ const raid = Command.make("raid", { target: Argument.String("target") }, ({ targ
   Effect.gen(function* () {
     const dir = yield* dataDir;
 
-    const [all, costs] = yield* Effect.promise(() =>
+    const [all, costs] = yield* loadData(() =>
       Promise.all([Items.loadItems(dir), Items.loadRaid(dir)]),
     );
 

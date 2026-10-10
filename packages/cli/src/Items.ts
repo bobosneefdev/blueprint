@@ -43,11 +43,18 @@ const decodeItems = Schema.decodeUnknownSync(Schema.Array(Item));
 
 const decodeRaid = Schema.decodeUnknownSync(Schema.Array(Raid));
 
-export const loadItems = async (dir: string) =>
-  decodeItems(await Bun.file(`${dir}/items.json`).json());
+const readData = async (dir: string, file: string) => {
+  const f = Bun.file(`${dir}/${file}`);
 
-export const loadRaid = async (dir: string) =>
-  decodeRaid(await Bun.file(`${dir}/raid.json`).json());
+  if (!(await f.exists()))
+    throw new Error(`game data not found at ${dir}/${file} (not synced yet, or set BOT_DATA_DIR)`);
+
+  return f.json();
+};
+
+export const loadItems = async (dir: string) => decodeItems(await readData(dir, "items.json"));
+
+export const loadRaid = async (dir: string) => decodeRaid(await readData(dir, "raid.json"));
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -95,6 +102,7 @@ export const raidCosts = (raid: ReadonlyArray<Raid>, items: ReadonlyArray<Item>,
     .map(({ target, r }) => ({
       target,
       health: r.health,
+      note: "hits to destroy from the hard side, vanilla server, from Rust's own damage tables",
       explosives: Object.fromEntries(
         Object.entries(r.explosives)
           .flatMap(([k, v]) => (v.hard !== undefined && v.hard < 100 ? [[k, v.hard] as const] : []))
