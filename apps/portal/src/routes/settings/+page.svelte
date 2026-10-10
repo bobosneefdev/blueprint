@@ -3,6 +3,8 @@
   import type { PageProps } from "./$types";
 
   let { data, form }: PageProps = $props();
+  // Writable derived: follows saved settings, editable locally.
+  let model = $derived(data.settings.model ?? "");
 </script>
 
 <h1 class="mb-6 text-2xl font-bold">Settings</h1>
@@ -32,7 +34,12 @@
 
       <label class="flex flex-col gap-1">
         <span class="label">Model (optional)</span>
-        <input class="input" name="model" value={data.settings.model ?? ""} placeholder="harness default" />
+        <input class="input" name="model" bind:value={model} placeholder="harness default" />
+        {#if /haiku|mini|nano|flash|small/i.test(model)}
+          <span class="text-warning text-sm">
+            Small models got raid numbers wrong in testing. Use a Sonnet-class model or better.
+          </span>
+        {/if}
       </label>
 
       <label class="flex flex-col gap-1">
