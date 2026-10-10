@@ -185,6 +185,12 @@ yields `/C:/...` on Windows (use `fileURLToPath`).
 - Fixture payload enforcement was added after a real run produced a passing plugin that read a
   field the server never sends.
 
+## Known security ceilings (accepted for v1)
+
+- Agent egress is an IP allowlist; shared CDN IPs also reach co-tenant sites. Fix: SNI-checking
+  CONNECT proxy (see egress-firewall).
+- The bot RPC on the WSL adapter is reachable by other WSL2 distros on the same PC (token-gated).
+
 ## Open
 
 - Project name (codename `better-rust`).

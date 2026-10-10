@@ -3,8 +3,10 @@
 # The agent may reach: its LLM provider (HTTPS to allowlisted hosts), DNS on the distro's own
 # resolver only (no DNS tunnelling to arbitrary servers), and the bot RPC port on the Windows host.
 # Nothing else, including other ports on the Windows host or on loopback (portal, browser devtools).
-# ponytail: IPs are resolved once at boot; CDN-backed hosts rotate IPs, so long sessions can lose
-# reach. Upgrade path: local DNS proxy (dnsmasq --ipset/nftset) that adds IPs as they resolve.
+# ponytail: allowlist is by IP, resolved once at boot. Two known ceilings: CDN-backed hosts rotate
+# IPs (long sessions can lose reach), and an allowed CDN IP also serves unrelated sites (a
+# compromised agent could reach those co-tenants). Upgrade path for both: route agent egress
+# through a local HTTPS CONNECT proxy that checks the SNI/host against egress-allow.txt.
 set -u
 AGENT_UID=$(id -u agent)
 RPC_PORT=${BOT_RPC_PORT:-47615}
