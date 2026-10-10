@@ -177,28 +177,48 @@ const portalDir = process.env.BETTER_RUST_PORTAL ?? join(import.meta.dir, "../..
 
 const { handler } = await import(join(portalDir, "handler.js"));
 
-createServer(handler).listen(config.portalPort, "127.0.0.1");
+// Another better-rust (or anything) on our ports means a second copy; exit with a clear message
+// instead of a stack trace. The tray app is single-instance, so this is mostly dev or a stale exe.
+const portInUse = (port: number) => (e: NodeJS.ErrnoException) => {
+  if (e.code !== "EADDRINUSE") throw e;
+
+  console.error(`better-rust: port ${port} is in use. Is better-rust already running?`);
+  Notify.toast("better-rust", `Port ${port} is in use. Is better-rust already running?`);
+  process.exit(1);
+};
+
+createServer(handler)
+  .on("error", portInUse(config.portalPort))
+  .listen(config.portalPort, "127.0.0.1");
 
 // ── RPC for the sandboxed CLI ────────────────────────────────────────────────────────────────────
-Bun.serve({
-  hostname: "127.0.0.1",
-  port: config.rpcPort,
-  fetch: Rpc.handler({
-    requesterFor: (token) => rpcTokens.get(token),
-    world: (id) => worlds.get(anyServer(id) ?? ""),
-    bindings: (id) => Effect.runSync(Ref.get(bindingRef(anyServer(id) ?? ""))),
-    recorded: (id, from) => Db.recorded(db, anyServer(id) ?? "", from),
-    propose: async (requester, r) => {
-      pending.set(requester, r.plugin);
-      await chatAll(
-        `${r.plugin.name}: ${r.plugin.description}`.slice(0, 120) +
-          ` — reply @${config.botName} yes to activate`,
-      );
+const rpcServe = () =>
+  Bun.serve({
+    hostname: "127.0.0.1",
+    port: config.rpcPort,
+    fetch: Rpc.handler({
+      requesterFor: (token) => rpcTokens.get(token),
+      world: (id) => worlds.get(anyServer(id) ?? ""),
+      bindings: (id) => Effect.runSync(Ref.get(bindingRef(anyServer(id) ?? ""))),
+      recorded: (id, from) => Db.recorded(db, anyServer(id) ?? "", from),
+      propose: async (requester, r) => {
+        pending.set(requester, r.plugin);
+        await chatAll(
+          `${r.plugin.name}: ${r.plugin.description}`.slice(0, 120) +
+            ` — reply @${config.botName} yes to activate`,
+        );
 
-      return "awaiting confirmation in team chat";
-    },
-  }),
-});
+        return "awaiting confirmation in team chat";
+      },
+    }),
+  });
+
+try {
+  rpcServe();
+} catch (e) {
+  // SAFETY: Bun.serve throws Node-style errno errors; portInUse rethrows anything else.
+  portInUse(config.rpcPort)(e as NodeJS.ErrnoException);
+}
 
 // ── Agent ────────────────────────────────────────────────────────────────────────────────────────
 const runAgent = AgentRunner.make({
