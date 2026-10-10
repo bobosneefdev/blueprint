@@ -104,6 +104,15 @@ export interface Commit {
   readonly message: string;
 }
 
+const COMMIT = /^[0-9a-f]{7,40}$/;
+
+/** Unified diff of one plugin file introduced by `commit`. */
+export const diff = (dir: string, name: string, commit: string) => {
+  if (!COMMIT.test(commit)) throw new Error("bad commit");
+
+  return git(dir, "show", "--format=", "--no-color", commit, "--", `plugins/${name}.json`);
+};
+
 export const history = (dir: string, name: string): Commit[] =>
   git(dir, "log", "--format=%H%x09%cI%x09%s", "--", `plugins/${name}.json`)
     .split("\n")

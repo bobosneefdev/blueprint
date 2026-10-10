@@ -25,6 +25,7 @@ export interface Bot {
   readonly plugins: () => ReadonlyArray<PluginRow>;
   readonly setEnabled: (name: string, enabled: boolean, by: string) => Promise<void>;
   readonly rollback: (name: string, commit: string, by: string) => Promise<void>;
+  readonly diff: (name: string, commit: string) => string;
   readonly reply: (id: string) => string | undefined;
   readonly pairing: () => { readonly signedIn: boolean; readonly hostSteamId: string };
   /** Opens Steam sign-in on the host PC; resolves with the signed-in SID64. */

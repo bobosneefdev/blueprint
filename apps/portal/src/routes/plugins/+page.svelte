@@ -36,7 +36,7 @@
             <ul class="collapse-content list">
               {#each p.history as h (h.commit)}
                 <li class="list-row items-center">
-                  <code class="text-xs">{h.commit.slice(0, 7)}</code>
+                  <a class="link font-mono text-xs" href="/plugins/{p.name}/{h.commit}">{h.commit.slice(0, 7)}</a>
                   <span class="text-sm">{h.message}</span>
                   <form method="POST" action="?/rollback" use:enhance>
                     <input type="hidden" name="name" value={p.name} />

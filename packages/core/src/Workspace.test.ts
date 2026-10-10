@@ -26,6 +26,9 @@ test("activate, toggle, history, rollback, undo", async () => {
 
   const h = Workspace.history(dir, "pop");
 
+  expect(Workspace.diff(dir, "pop", h[0]!.commit)).toContain('+  "version": 2');
+  expect(() => Workspace.diff(dir, "pop", "--output=/tmp/x")).toThrow();
+
   expect(h.map((c) => c.message)).toEqual([
     "activate pop v2 (by host)",
     "activate pop v1 (by host)",

@@ -105,6 +105,7 @@ attach({
     await reloadPlugins();
   },
   reply: (id) => replies.get(id),
+  diff: (name, commit) => Workspace.diff(workspaceDir, name, commit),
   pairing: () => ({ signedIn: config.rustplus !== undefined, hostSteamId: config.hostSteamId }),
   pair: () => pair(),
   activity: () => activity,
