@@ -9,6 +9,7 @@
   const links = [
     { href: "/", label: "Servers" },
     { href: "/plugins", label: "Plugins" },
+    { href: "/settings", label: "Settings" },
   ];
 </script>
 

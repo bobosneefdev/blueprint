@@ -3,7 +3,7 @@
 //   rpc     127.0.0.1:rpcPort     -> `bot` CLI inside WSL (mirrored networking), token-gated
 //   servers one Rust+ websocket per paired server, plugin runtime + recorder
 import { Bindings, Db, Pairing, Rpc, RustPlus, Server, Tunnel, Workspace } from "@better-rust/core";
-import type { Plugin, World } from "@better-rust/dsl";
+import { type Plugin, Validate, type World } from "@better-rust/dsl";
 import { Effect, Ref, Schedule, Stream } from "effect";
 import { randomBytes } from "node:crypto";
 import { createServer } from "node:http";
@@ -11,6 +11,7 @@ import { join } from "node:path";
 import * as AgentRunner from "./AgentRunner.ts";
 import * as Config from "./Config.ts";
 import * as GameData from "./GameData.ts";
+import * as Notify from "./Notify.ts";
 import * as Sandbox from "./Sandbox.ts";
 import * as SteamLogin from "./SteamLogin.ts";
 
@@ -96,6 +97,34 @@ attach({
   reply: (id) => replies.get(id),
   pairing: () => ({ signedIn: config.rustplus !== undefined, hostSteamId: config.hostSteamId }),
   pair: () => pair(),
+  settings: () => ({
+    botName: config.botName,
+    allowlist: config.allowlist,
+    harness: config.harness,
+    model: config.model,
+    ntfyTopic: config.ntfyTopic,
+  }),
+  saveSettings: async (next) => {
+    config = Config.merge(config, next);
+    await Config.save(config);
+  },
+  importPlugin: async (url, by) => {
+    // Gallery plugins are PRs to a GitHub repo; only fetch from raw GitHub (no SSRF to LAN).
+    if (new URL(url).origin !== "https://raw.githubusercontent.com") return ["not a gallery URL"];
+
+    const res = await fetch(url, { redirect: "error" });
+
+    if (!res.ok) return [`download failed: ${res.status}`];
+
+    const r = Validate.validate(await res.json());
+
+    if (!r.ok) return r.problems.map((p) => `${p.path} ${p.message}`.trim());
+
+    await Workspace.activate(workspaceDir, r.plugin, by);
+    await reloadPlugins();
+
+    return [];
+  },
 });
 
 // Packaged: Tauri passes the bundled portal dir. Dev: the sibling app's build output.
@@ -229,7 +258,8 @@ const runServer = (s: Db.ServerRow) =>
             saveBindings(s.id, { devices: [], bindings: {} }, `wipe ${s.name}: reset bindings`),
           ),
         onAgentMessage: (id, name, text) => Effect.promise(() => onAgentMessage(id, name, text)),
-        notify: (text) => Effect.sync(() => console.log(`[notify] ${text}`)),
+        notify: (text, channel) =>
+          Effect.promise(() => Notify.send(config.ntfyTopic, text, channel).catch(() => undefined)),
         isAgentMessage: (text) => new RegExp(`^\\s*@${config.botName}\\b`, "i").test(text),
         botPrefix: BOT_PREFIX,
       });

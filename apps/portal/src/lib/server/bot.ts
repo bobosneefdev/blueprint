@@ -29,6 +29,19 @@ export interface Bot {
   readonly pairing: () => { readonly signedIn: boolean; readonly hostSteamId: string };
   /** Opens Steam sign-in on the host PC; resolves with the signed-in SID64. */
   readonly pair: () => Promise<string>;
+  readonly settings: () => Settings;
+  /** Host only. */
+  readonly saveSettings: (s: Settings) => Promise<void>;
+  /** Validates, then activates a plugin from a URL (gallery import). Returns problems if invalid. */
+  readonly importPlugin: (url: string, by: string) => Promise<ReadonlyArray<string>>;
+}
+
+export interface Settings {
+  readonly botName: string;
+  readonly allowlist: ReadonlyArray<string>;
+  readonly harness: "claude" | "codex" | "pi";
+  readonly model: string | undefined;
+  readonly ntfyTopic: string | undefined;
 }
 
 // The portal is bundled separately from the bot, so module state is not shared; a global is the

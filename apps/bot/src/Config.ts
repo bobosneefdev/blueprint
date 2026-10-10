@@ -66,4 +66,29 @@ export const load = async (): Promise<Config> => {
   return decode(await f.text());
 };
 
+/** Applies portal settings; optional keys are dropped when blank. Validated by the schema. */
+export const merge = (
+  c: Config,
+  next: {
+    readonly botName: string;
+    readonly allowlist: ReadonlyArray<string>;
+    readonly harness: Config["harness"];
+    readonly model: string | undefined;
+    readonly ntfyTopic: string | undefined;
+  },
+): Config => {
+  const { model: _m, ntfyTopic: _n, ...base } = c;
+  const out: Record<string, Schema.Json> = JSON.parse(JSON.stringify(base));
+
+  out.botName = next.botName;
+  out.allowlist = [...next.allowlist];
+  out.harness = next.harness;
+
+  if (next.model) out.model = next.model;
+
+  if (next.ntfyTopic) out.ntfyTopic = next.ntfyTopic;
+
+  return decode(JSON.stringify(out));
+};
+
 export const save = (c: Config) => Bun.write(path(), `${JSON.stringify(c, null, 2)}\n`);
