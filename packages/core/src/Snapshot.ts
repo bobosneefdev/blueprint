@@ -1,7 +1,8 @@
 // Raw Rust+ responses -> plugin World, and World diffs -> plugin events.
 // Pure functions: the poller calls these; tests and replay call them directly.
 import type { Device, Marker, MarkerKind, Member, World } from "@better-rust/dsl";
-import type { EventKind, ValueMap } from "@better-rust/dsl";
+import { EventKind, ValueMap } from "@better-rust/dsl";
+import { Schema } from "effect";
 import type { AppInfo, AppMarker, AppTeamInfo, AppTime } from "./RustPlus.ts";
 
 const markerKinds = new Map<number, MarkerKind>([
@@ -87,10 +88,9 @@ export const toWorld = (raw: Raw, previous: World | undefined): World => {
   };
 };
 
-export interface Event {
-  readonly kind: EventKind;
-  readonly payload: ValueMap;
-}
+export const Event = Schema.Struct({ kind: EventKind, payload: ValueMap });
+
+export interface Event extends Schema.Schema.Type<typeof Event> {}
 
 const ev = (kind: EventKind, payload: ValueMap): Event => ({ kind, payload });
 
