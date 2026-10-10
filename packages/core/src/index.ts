@@ -15,3 +15,5 @@ export * as RustPlus from "./RustPlus.ts";
 export * as Server from "./Server.ts";
 
 export * as Snapshot from "./Snapshot.ts";
+
+export * as SteamAuth from "./SteamAuth.ts";

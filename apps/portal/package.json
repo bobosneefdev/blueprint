@@ -1,0 +1,39 @@
+{
+  "name": "@better-rust/portal",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#lib": "./src/lib/index.js",
+    "#lib/*": "./src/lib/*"
+  },
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "prepare": "svelte-kit sync || echo ''",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "@better-rust/core": "workspace:*",
+    "@better-rust/dsl": "workspace:*",
+    "effect": "4.0.2"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-node": "^6.0.0",
+    "@sveltejs/kit": "^3.0.0",
+    "@sveltejs/vite-plugin-svelte": "^7.2.0",
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/bun": "1.4.2",
+    "@types/node": "^24",
+    "bits-ui": "2.19.5",
+    "daisyui": "5.7.47",
+    "svelte": "^5.57.1",
+    "svelte-check": "^4.6.0",
+    "tailwindcss": "^4.3.0",
+    "typescript": "6.0.3",
+    "vite": "^8.3.0"
+  }
+}

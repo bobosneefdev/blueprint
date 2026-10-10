@@ -4,6 +4,8 @@
     ".claude/**",
     "tools/oxlint/anti-slop/**",
     "LICENSE",
-    "skills-lock.json"
+    "skills-lock.json",
+    "**/build/**",
+    "**/.svelte-kit/**"
   ]
 }

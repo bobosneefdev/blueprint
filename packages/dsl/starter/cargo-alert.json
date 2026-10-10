@@ -1,6 +1,6 @@
 {
   "name": "cargo-alert",
-  "description": "Announce in team chat when Cargo Ship spawns and when it leaves.",
+  "description": "Announce in team chat when Cargo Ship spawns, with its grid.",
   "version": 1,
   "trigger": {
     "_tag": "Event",
