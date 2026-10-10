@@ -129,7 +129,7 @@ const { attach } = await import("@better-rust/portal/src/lib/server/bot.ts");
 
 attach({
   sessionSecret: config.sessionSecret,
-  hostSteamId: config.hostSteamId,
+  hostSteamId: () => config.hostSteamId,
   allowlist: () => config.allowlist,
   publicUrl: () => publicUrl,
   servers: () =>

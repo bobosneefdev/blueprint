@@ -1,6 +1,7 @@
 import { redirect } from "@sveltejs/kit";
 import type { Handle } from "@sveltejs/kit/hooks";
 import { bot } from "#lib/server/bot.ts";
+import { isLocal } from "#lib/server/origin.ts";
 import * as Session from "#lib/server/session.ts";
 
 // Matched on route ids, never on the raw pathname: SvelteKit decodes %-escapes when routing, so
@@ -8,13 +9,6 @@ import * as Session from "#lib/server/session.ts";
 const PUBLIC = new Set(["/auth/login", "/auth/callback"]);
 
 const LOCAL_ONLY = new Set(["/pair", "/harness"]);
-
-/**
- * Requests through the tunnel always carry cf-connecting-ip (cloudflared sets it); the portal
- * only listens on 127.0.0.1, so a request without it came from this PC.
- */
-const isLocal = (request: Request, url: URL) =>
-  !request.headers.has("cf-connecting-ip") && ["127.0.0.1", "localhost"].includes(url.hostname);
 
 /** Everything except the login flow requires the host or an allowlisted SID64. */
 export const handle: Handle = async ({ event, resolve }) => {
@@ -33,7 +27,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     // First run has no host yet; afterwards these need the host's own session too, so another
     // local process (or a sandbox that reaches loopback) cannot use them anonymously.
-    if (b.pairing().hostSteamId !== "" && sid64 !== b.hostSteamId) redirect(303, "/auth/login");
+    if (b.pairing().hostSteamId !== "" && sid64 !== b.hostSteamId()) redirect(303, "/auth/login");
 
     return resolve(event);
   }
@@ -47,7 +41,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   if (sid64 === undefined) redirect(303, "/auth/login");
 
-  if (sid64 !== b.hostSteamId && !b.allowlist().includes(sid64))
+  if (sid64 !== b.hostSteamId() && !b.allowlist().includes(sid64))
     return new Response("Forbidden: ask the host to add your Steam account.", { status: 403 });
 
   return resolve(event);

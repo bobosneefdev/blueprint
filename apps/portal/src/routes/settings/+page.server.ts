@@ -5,12 +5,12 @@ const SID64 = /^7656119\d{10}$/;
 
 export const load = ({ locals }) => ({
   settings: bot().settings(),
-  isHost: locals.sid64 === bot().hostSteamId,
+  isHost: locals.sid64 === bot().hostSteamId(),
 });
 
 export const actions = {
   save: async ({ request, locals }) => {
-    if (locals.sid64 !== bot().hostSteamId) error(403, "Only the host can change settings.");
+    if (locals.sid64 !== bot().hostSteamId()) error(403, "Only the host can change settings.");
 
     const f = await request.formData();
     const botName = String(f.get("botName") ?? "").trim();
@@ -41,7 +41,7 @@ export const actions = {
     return { saved: true };
   },
   import: async ({ request, locals }) => {
-    if (locals.sid64 !== bot().hostSteamId) error(403, "Only the host can import plugins.");
+    if (locals.sid64 !== bot().hostSteamId()) error(403, "Only the host can import plugins.");
 
     const url = String((await request.formData()).get("url") ?? "").trim();
 

@@ -124,46 +124,71 @@ const context = (scope: Scope) => ({
 const firstLine = (e: Error) => e.message.split("\n")[0] ?? "";
 
 /** Static check: syntax + types. Returns an error message or undefined. */
-const MACROS = /\.(all|exists|exists_one|map|filter)\s*\(/g;
+const MACROS = new Set(["all", "exists", "exists_one", "map", "filter"]);
+
+/**
+ * cel-js AST (untyped upstream): nodes are `{ op, args }` where args is a scalar, a node, or an
+ * array of those; a method call is `{ op: "rcall", args: [name, target, callArgs] }`.
+ */
+type Ast = string | number | bigint | boolean | null | undefined | AstNode | ReadonlyArray<Ast>;
+
+interface AstNode {
+  readonly op: string;
+  readonly args?: Ast;
+}
+
+const isNode = (v: Ast): v is AstNode => Predicate.isObject(v) && !Array.isArray(v) && "op" in v;
+
+const children = (v: Ast): ReadonlyArray<Ast> => (Array.isArray(v) ? v : isNode(v) ? [v.args] : []);
+
+const isCall = (v: Ast): v is AstNode => isNode(v) && v.op === "rcall";
+
+/** Deepest nesting of comprehension macros, from the parsed AST (comments/strings can't fool it). */
+const macroDepth = (v: Ast): number => {
+  const self = isCall(v) && Array.isArray(v.args) && MACROS.has(String(v.args[0])) ? 1 : 0;
+
+  return (
+    self +
+    Math.max(
+      0,
+      ...children(v)
+        .flatMap((c) => (Array.isArray(c) ? c : [c]))
+        .map(macroDepth),
+    )
+  );
+};
+
+/** Total `+` operators anywhere; list concatenation multiplies comprehension cost. */
+const plusCount = (v: Ast): number =>
+  (isNode(v) && v.op === "+" ? 1 : 0) +
+  children(v)
+    .flatMap((c) => (Array.isArray(c) ? c : [c]))
+    .reduce((n: number, c) => n + plusCount(c), 0);
 
 /**
  * Evaluation is synchronous on the bot's only thread, so cost must be bounded statically.
- * Comprehensions nest multiplicatively (team^depth); 2 levels costs ~5ms with a full team.
+ * Comprehensions nest multiplicatively (list^depth); 2 levels over a full team costs ~5ms.
  */
 const costProblem = (expr: string): string | undefined => {
-  if (expr.length > 1000) return "expression longer than 1000 characters";
+  if (expr.length > 500) return "expression longer than 500 characters";
 
-  let depth = 0;
-  let max = 0;
-  let open: number[] = [];
+  // SAFETY: cel-js parse() returns its AST typed as any; Ast describes its documented shape.
+  let ast: Ast;
 
-  // Track how many macro calls are open at once by matching their parentheses.
-  for (let i = 0; i < expr.length; i++) {
-    MACROS.lastIndex = i;
-
-    const m = MACROS.exec(expr);
-
-    if (m?.index === i) {
-      depth++;
-      max = Math.max(max, depth);
-      open.push(0);
-      i += m[0].length - 1;
-      continue;
-    }
-
-    if (expr[i] === "(" && open.length > 0) open[open.length - 1]!++;
-
-    if (expr[i] === ")" && open.length > 0) {
-      if (open[open.length - 1] === 0) {
-        open = open.slice(0, -1);
-        depth--;
-      } else open[open.length - 1]!--;
-    }
+  try {
+    ast = base.parse(expr).ast;
+  } catch {
+    return undefined; // syntax errors are reported by check() below
   }
 
-  return max > 2
-    ? `comprehensions nested ${max} deep (max 2): split into steps with state`
-    : undefined;
+  const depth = macroDepth(ast);
+
+  if (depth > 2) return `comprehensions nested ${depth} deep (max 2): split into steps with state`;
+
+  // ponytail: + also covers number/string addition; 8 is ample for real plugins.
+  if (depth > 0 && plusCount(ast) > 8) return "too many + in an expression with comprehensions";
+
+  return undefined;
 };
 
 export const check = (expr: string): string | undefined => {

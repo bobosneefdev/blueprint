@@ -14,7 +14,8 @@ export interface PluginRow {
 
 export interface Bot {
   readonly sessionSecret: string;
-  readonly hostSteamId: string;
+  /** Live: empty until first Rust+ sign-in sets it. */
+  readonly hostSteamId: () => string;
   readonly allowlist: () => ReadonlyArray<string>;
   readonly publicUrl: () => string;
   readonly servers: () => ReadonlyArray<{

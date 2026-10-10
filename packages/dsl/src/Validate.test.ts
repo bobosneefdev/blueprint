@@ -92,3 +92,22 @@ test("expressions with deep comprehension nesting are rejected statically", asyn
   expect(withWhen(nest(2)).ok).toBe(true);
   expect(withWhen("team.filter(m, m.online).map(m, m.name).size() >= 0").ok).toBe(true);
 });
+
+test("nesting check reads the AST: comments and string parens can't hide depth", async () => {
+  const cargo = await Bun.file(dir + "cargo-alert.json").json();
+
+  const withWhen = (when: string) =>
+    validate({ ...cargo, steps: [{ when, actions: cargo.steps[0].actions }] });
+
+  const tricks = [
+    'team.all(a, ")" == ")" && team.all(b, team.all(c, true)))',
+    "team.all(a, // hidden\n team.all(b, team.exists(c, true)))",
+    "team.all(a, team.map(b, b).exists_one(c, team.filter(d, true).size() > 0))",
+  ];
+
+  for (const t of tricks) {
+    const r = withWhen(t);
+
+    expect(r.ok ? "accepted" : r.problems[0]?.message).toContain("nested");
+  }
+});
