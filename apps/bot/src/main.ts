@@ -56,6 +56,15 @@ const chatSinks = new Map<string, (line: string) => Promise<void>>();
 
 const replies = new Map<string, string>();
 
+type Activity = { at: number; server: string; plugin: string; message: string };
+
+const activity: Activity[] = [];
+
+const logActivity = (server: string) => (e: { plugin: string; message: string }) => {
+  activity.unshift({ at: Date.now(), server, ...e });
+  activity.length = Math.min(activity.length, 200);
+};
+
 const sessions = new Map<string, string>();
 
 const pending = new Map<string, Plugin>();
@@ -97,6 +106,7 @@ attach({
   reply: (id) => replies.get(id),
   pairing: () => ({ signedIn: config.rustplus !== undefined, hostSteamId: config.hostSteamId }),
   pair: () => pair(),
+  activity: () => activity,
   settings: () => ({
     botName: config.botName,
     allowlist: config.allowlist,
@@ -253,6 +263,7 @@ const runServer = (s: Db.ServerRow) =>
         rp,
         plugins: pluginsRef,
         bindings: bindingRef(s.id),
+        onActivity: logActivity(s.name),
         onWipe: () =>
           Effect.promise(() =>
             saveBindings(s.id, { devices: [], bindings: {} }, `wipe ${s.name}: reset bindings`),

@@ -30,6 +30,13 @@ export interface Bot {
   /** Opens Steam sign-in on the host PC; resolves with the signed-in SID64. */
   readonly pair: () => Promise<string>;
   readonly settings: () => Settings;
+  /** Most recent first. */
+  readonly activity: () => ReadonlyArray<{
+    readonly at: number;
+    readonly server: string;
+    readonly plugin: string;
+    readonly message: string;
+  }>;
   /** Host only. */
   readonly saveSettings: (s: Settings) => Promise<void>;
   /** Validates, then activates a plugin from a URL (gallery import). Returns problems if invalid. */

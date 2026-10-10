@@ -25,6 +25,8 @@ export interface Options {
   readonly notify: (text: string, channel: "toast" | "phone" | "both") => Effect.Effect<void>;
   /** Entity ids are reset by a wipe; the owner clears this server's bindings. */
   readonly onWipe: () => Effect.Effect<void>;
+  /** Plugin runtime failures and throttling, for the portal's activity log. */
+  readonly onActivity: (entry: { readonly plugin: string; readonly message: string }) => void;
   readonly isAgentMessage: (text: string) => boolean;
   /** Our own chat lines echo back as broadcasts; skip them so plugins never react to the bot. */
   readonly botPrefix: string;
@@ -72,7 +74,17 @@ export const run = (opts: Options) =>
 
       const r = Runtime.step(plugins, input, state);
 
-      for (const f of r.failures) yield* Effect.logWarning("plugin failed", f);
+      for (const f of r.failures) {
+        yield* Effect.logWarning("plugin failed", f);
+        opts.onActivity({ plugin: f.plugin, message: `failed at ${f.at}: ${f.message}` });
+      }
+
+      for (const o of r.outputs)
+        if (o.throttled > 0)
+          opts.onActivity({
+            plugin: o.plugin,
+            message: `${o.throttled} chat message(s) dropped by chatBudget`,
+          });
 
       for (const o of r.outputs) yield* execute(o.effects);
     });
