@@ -293,7 +293,7 @@ const listenForPairs = () => {
 
   stopListening?.();
   stopListening = Pairing.listen(
-    { fcm: rp.fcm, expoPushToken: "" },
+    { fcm: rp.fcm, expoPushToken: rp.expoPushToken },
     rp.persistentIds,
     (n, persistentId) => {
       config = {
@@ -349,15 +349,71 @@ const pair = async () => {
   config = {
     ...config,
     hostSteamId: config.hostSteamId === "" ? steamId : config.hostSteamId,
-    rustplus: { authToken, fcm: device.fcm, persistentIds: [] },
+    rustplus: {
+      authToken,
+      expoPushToken: device.expoPushToken,
+      fcm: device.fcm,
+      persistentIds: [],
+    },
   };
   await Config.save(config);
   listenForPairs();
+
+  // The Rust+ auth token expires (~2 weeks). Re-registering push both refreshes and probes it; a
+  // rejection means pair notifications have stopped and the host must sign in again.
+  const checkRustPlusAuth = async () => {
+    const rp = config.rustplus;
+
+    if (rp === undefined) return;
+
+    try {
+      await Pairing.registerPush(rp.authToken, rp.expoPushToken);
+    } catch (e) {
+      // Drop the stale credentials so /pair offers sign-in again; pair history is kept in the db.
+      config = Config.withoutRustPlus(config);
+      await Config.save(config);
+      stopListening?.();
+
+      const msg = `Rust+ sign-in expired. Open the portal on this PC and sign in again (${e instanceof Error ? e.message : e}).`;
+
+      Notify.toast("better-rust", msg);
+      await chatAll("Rust+ sign-in expired: host, re-sign in from the portal on your PC.");
+    }
+  };
+
+  setInterval(checkRustPlusAuth, 24 * 3600_000);
+  void checkRustPlusAuth();
 
   return steamId;
 };
 
 listenForPairs();
+
+// The Rust+ auth token expires (~2 weeks). Re-registering push both refreshes and probes it; a
+// rejection means pair notifications have stopped and the host must sign in again.
+const checkRustPlusAuth = async () => {
+  const rp = config.rustplus;
+
+  if (rp === undefined) return;
+
+  try {
+    await Pairing.registerPush(rp.authToken, rp.expoPushToken);
+  } catch (e) {
+    // Drop the stale credentials so /pair offers sign-in again; pair history is kept in the db.
+    config = Config.withoutRustPlus(config);
+    await Config.save(config);
+    stopListening?.();
+
+    const msg = `Rust+ sign-in expired. Open the portal on this PC and sign in again (${e instanceof Error ? e.message : e}).`;
+
+    Notify.toast("better-rust", msg);
+    await chatAll("Rust+ sign-in expired: host, re-sign in from the portal on your PC.");
+  }
+};
+
+setInterval(checkRustPlusAuth, 24 * 3600_000);
+
+void checkRustPlusAuth();
 
 // ── Tunnel ───────────────────────────────────────────────────────────────────────────────────────
 const cloudflared =

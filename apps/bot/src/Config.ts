@@ -28,6 +28,7 @@ export const Config = Schema.Struct({
   rustplus: Schema.optionalKey(
     Schema.Struct({
       authToken: Schema.String,
+      expoPushToken: Schema.String,
       fcm: Schema.Struct({ androidId: Schema.String, securityToken: Schema.String }),
       persistentIds: Schema.Array(Schema.String),
     }),
@@ -89,6 +90,12 @@ export const merge = (
   if (next.ntfyTopic) out.ntfyTopic = next.ntfyTopic;
 
   return decode(JSON.stringify(out));
+};
+
+export const withoutRustPlus = (c: Config): Config => {
+  const { rustplus: _r, ...rest } = c;
+
+  return rest;
 };
 
 export const save = (c: Config) => Bun.write(path(), `${JSON.stringify(c, null, 2)}\n`);
