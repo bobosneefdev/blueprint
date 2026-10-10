@@ -1,6 +1,9 @@
 {
   "name": "@better-rust/cli",
   "private": true,
+  "bin": {
+    "bot": "./src/main.ts"
+  },
   "type": "module",
   "exports": "./src/index.ts",
   "scripts": {
@@ -12,8 +15,5 @@
     "@better-rust/dsl": "workspace:*",
     "@effect/platform-bun": "4.0.2",
     "effect": "4.0.2"
-  },
-  "bin": {
-    "bot": "./src/main.ts"
   }
 }
