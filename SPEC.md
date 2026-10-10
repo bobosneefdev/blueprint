@@ -168,6 +168,13 @@ review: DNS only to the distro resolver (1.1.1.1 blocked), other loopback ports 
 Windows host ports blocked; a drvfs mount of one Windows directory does not expose its parent, but
 drvfs ignores `ro` for the agent, so game data is copied in rather than mounted.
 
+## Native Windows verification (Windows 11 VM, 2026-10-10)
+
+All dsl/core/bot test suites pass natively under Bun on Windows (one POSIX-sh test skipped by
+design). The compiled `better-rust-bot.exe` boots: portal redirects to /pair, RPC rejects
+unauthenticated calls, workspace is seeded via bundled MinGit. Fixed on the way: `URL.pathname`
+yields `/C:/...` on Windows (use `fileURLToPath`).
+
 ## Agent quality (measured 2026-10-10, real harness runs against the bot CLI)
 
 - Sonnet-class: correct on raid/craft Q&A (3/3, 2-3 turns, ~$0.04), writes valid plugins first try

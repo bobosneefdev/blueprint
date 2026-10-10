@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { fileURLToPath } from "node:url";
 import { Validate } from "@better-rust/dsl";
 import { Effect, Ref } from "effect";
 import protobuf from "protobufjs";
@@ -7,7 +8,9 @@ import type * as Runtime from "./Runtime.ts";
 import * as RustPlus from "./RustPlus.ts";
 import * as Server from "./Server.ts";
 
-const root = await protobuf.load(new URL("../proto/rustplus.proto", import.meta.url).pathname);
+const root = await protobuf.load(
+  fileURLToPath(new URL("../proto/rustplus.proto", import.meta.url)),
+);
 
 const AppRequest = root.lookupType("rustplus.AppRequest");
 

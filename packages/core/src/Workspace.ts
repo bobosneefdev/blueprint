@@ -21,7 +21,8 @@ const HARDEN = [
 ];
 
 const git = (dir: string, ...args: string[]) => {
-  const r = Bun.spawnSync(["git", ...HARDEN, "-C", dir, ...args], {
+  // Packaged builds ship MinGit (many gamers have no git); BETTER_RUST_GIT points at it.
+  const r = Bun.spawnSync([process.env.BETTER_RUST_GIT ?? "git", ...HARDEN, "-C", dir, ...args], {
     stdout: "pipe",
     stderr: "pipe",
   });

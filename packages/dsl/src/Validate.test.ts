@@ -1,9 +1,10 @@
 import { expect, test } from "bun:test";
+import { fileURLToPath } from "node:url";
 import { Glob } from "bun";
 import { Action, Expected, Trigger } from "./Plugin.ts";
 import { validate } from "./Validate.ts";
 
-const dir = new URL("../starter/", import.meta.url).pathname;
+const dir = fileURLToPath(new URL("../starter/", import.meta.url));
 
 for (const file of new Glob("*.json").scanSync(dir)) {
   test(`starter/${file} validates and passes its fixtures`, async () => {

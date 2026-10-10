@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { Validate } from "@better-rust/dsl";
-import { mkdtempSync } from "node:fs";
+import { chmodSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseUrl } from "./Tunnel.ts";
@@ -88,7 +88,7 @@ test("files dropped into plugins/ without activate() stay disabled; hooks never 
   await Workspace.init(dir);
   await Bun.write(join(dir, "plugins", "pop.json"), JSON.stringify(pop));
   await Bun.write(join(dir, ".git", "hooks", "pre-commit"), "#!/bin/sh\ntouch pwned\n");
-  Bun.spawnSync(["chmod", "+x", join(dir, ".git", "hooks", "pre-commit")]);
+  chmodSync(join(dir, ".git", "hooks", "pre-commit"), 0o755);
 
   expect((await Workspace.load(dir)).loaded.map((l) => l.enabled)).toEqual([false]);
 

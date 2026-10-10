@@ -4,6 +4,7 @@
 // broadcasts as a Stream, and the vendored proto (proto/rustplus.proto, every `required` made
 // `optional` because newer servers omit fields like `queuedPlayers`).
 import { Context, Data, Deferred, Effect, Layer, Queue, Ref, Stream } from "effect";
+import { fileURLToPath } from "node:url";
 import protobuf from "protobufjs";
 
 export interface ServerCredentials {
@@ -124,10 +125,7 @@ export interface Interface {
 
 export class Service extends Context.Service<Service, Interface>()("@better-rust/RustPlus") {}
 
-const protoPath = new URL("../proto/rustplus.proto", import.meta.url).pathname.replace(
-  /^\/([A-Z]:)/,
-  "$1",
-);
+const protoPath = fileURLToPath(new URL("../proto/rustplus.proto", import.meta.url));
 
 const toObjectOptions = { longs: String, enums: Number, bytes: String, defaults: false } as const;
 

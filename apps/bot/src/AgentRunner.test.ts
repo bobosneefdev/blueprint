@@ -1,12 +1,16 @@
 import { expect, test } from "bun:test";
 import { make, shQuote } from "./AgentRunner.ts";
 
-test("shQuote survives hostile chat text through sh -c", () => {
-  const nasty = `it's $(rm -rf ~) \`id\` "x" ; echo pwned`;
-  const r = Bun.spawnSync(["sh", "-c", `printf %s ${shQuote(nasty)}`], { stdout: "pipe" });
+// The quoted string is consumed by sh inside the WSL distro; the Windows host has no sh.
+test.skipIf(process.platform === "win32")(
+  "shQuote survives hostile chat text through sh -c",
+  () => {
+    const nasty = `it's $(rm -rf ~) \`id\` "x" ; echo pwned`;
+    const r = Bun.spawnSync(["sh", "-c", `printf %s ${shQuote(nasty)}`], { stdout: "pipe" });
 
-  expect(r.stdout.toString()).toBe(nasty);
-});
+    expect(r.stdout.toString()).toBe(nasty);
+  },
+);
 
 type Run = NonNullable<Parameters<typeof make>[0]["run"]>;
 

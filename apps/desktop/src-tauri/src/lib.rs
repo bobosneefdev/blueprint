@@ -27,7 +27,9 @@ fn spawn_sidecar(app: &AppHandle) {
         .unwrap_or_default();
 
     let cmd = match app.shell().sidecar("better-rust-bot") {
-        Ok(c) => c.env("BETTER_RUST_PORTAL", portal_dir),
+        Ok(c) => c
+            .env("BETTER_RUST_PORTAL", &portal_dir)
+            .env("BETTER_RUST_GIT", portal_dir.with_file_name("mingit").join("cmd").join("git.exe")),
         Err(e) => {
             eprintln!("sidecar missing: {e}");
             return;

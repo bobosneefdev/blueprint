@@ -54,6 +54,12 @@ jobs:
           cd apps/bot && bun run build
           mkdir -p ../desktop/src-tauri/binaries
           cp dist/better-rust-bot.exe ../desktop/src-tauri/binaries/better-rust-bot-x86_64-pc-windows-msvc.exe
+      - name: bundle MinGit (git for the plugin workspace; most players have none)
+        shell: pwsh
+        run: |
+          $u = "https://github.com/git-for-windows/git/releases/download/v2.56.0.windows.2/MinGit-2.56.0.2-64-bit.zip"
+          Invoke-WebRequest $u -OutFile mingit.zip
+          Expand-Archive mingit.zip apps/desktop/src-tauri/mingit
       - name: tray app + installer
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
