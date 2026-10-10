@@ -5,6 +5,7 @@
 //    warning, player clicks); the page hands back {SteamId, Token} via ReactNativeWebView.
 // 3. registerPush: tells Facepunch where to send pair notifications.
 // 4. listen: in-game "Pair with Server" / "Pair" on devices arrive as FCM data messages.
+/// <reference path="./push-receiver.d.ts" />
 import AndroidFCM from "@liamcottle/push-receiver/src/android/fcm";
 import PushReceiverClient from "@liamcottle/push-receiver/src/client";
 import { Option, Schema } from "effect";
