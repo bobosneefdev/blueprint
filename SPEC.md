@@ -158,6 +158,13 @@ tools/oxlint/anti-slop  vendored lint rules
 - Vendor `rustplus.proto` with `required` → `optional`.
 - Detect Rust+ auth token expiry (~2 weeks) and prompt re-login.
 
+## Sandbox verification (Windows 11 VM, WSL 3.0.1, real WSL2 distro, 2026-10-10)
+
+As the `agent` user with the shipped `wsl.conf` + `egress-firewall`: Windows drives not mounted,
+`cmd.exe` (interop) unavailable, no `sudo`, arbitrary HTTPS rejected; `api.anthropic.com`, DNS and
+the bot RPC port on the Windows host reachable; musl `bot` CLI runs. Found and fixed: the default
+route parse picked up two lines on WSL2 (`default via` + a second route line).
+
 ## Agent quality (measured 2026-10-10, real harness runs against the bot CLI)
 
 - Sonnet-class: correct on raid/craft Q&A (3/3, 2-3 turns, ~$0.04), writes valid plugins first try
