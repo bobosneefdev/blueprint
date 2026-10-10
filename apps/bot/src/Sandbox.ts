@@ -53,6 +53,7 @@ export const hostAddress = () => {
     ],
     { stdout: "pipe", stderr: "ignore" },
   );
+
   const ip = r.stdout.toString().trim();
 
   return /^\d{1,3}(\.\d{1,3}){3}$/.test(ip) ? ip : undefined;
