@@ -1,5 +1,5 @@
 # better-rust installer. Read it before you run it:
-#   powershell -ExecutionPolicy ByPass -c "irm https://better-rust.pages.dev/install.ps1 | iex"
+#   powershell -ExecutionPolicy ByPass -c "irm https://github.com/bobosneefdev/better-rust/releases/latest/download/install.ps1 | iex"
 #
 # What it does, in order:
 #   1. Checks Windows 10 2004+/11 x64.

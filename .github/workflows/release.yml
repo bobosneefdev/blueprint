@@ -1,0 +1,113 @@
+name: release
+
+# Tag vX.Y.Z to publish. Everything users download is built here, in public, from the tagged
+# source: checksums + build provenance attestations + a VirusTotal report link in the notes.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  rootfs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - name: bot CLI (musl, for the Alpine sandbox)
+        run: cd packages/cli && bun run build && cp dist/bot ../installer/rootfs/bot
+      - name: sandbox image
+        run: |
+          docker build -t better-rust-agent packages/installer/rootfs
+          docker export "$(docker create better-rust-agent)" | gzip -9 > better-rust-agent.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rootfs
+          path: better-rust-agent.tar.gz
+
+  app:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: dtolnay/rust-toolchain@stable
+      - run: bun install --frozen-lockfile
+      - name: portal
+        run: cd apps/portal && bun run build
+      - name: sidecar
+        shell: bash
+        run: |
+          cd apps/bot && bun run build
+          mkdir -p ../desktop/src-tauri/binaries
+          cp dist/better-rust-bot.exe ../desktop/src-tauri/binaries/better-rust-bot-x86_64-pc-windows-msvc.exe
+      - name: tray app + installer
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: cd apps/desktop && bunx tauri build
+      - name: collect
+        shell: bash
+        run: |
+          mkdir out
+          cp apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe out/better-rust-setup.exe
+          cp apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe.sig out/better-rust-setup.exe.sig
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: out/*
+
+  publish:
+    needs: [rootfs, app]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: updater manifest
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/better-rust-setup.exe"
+          jq -n --arg v "$VERSION" --arg url "$URL" --rawfile sig dist/better-rust-setup.exe.sig \
+            '{version: $v, platforms: {"windows-x86_64": {url: $url, signature: $sig}}}' > dist/latest.json
+          cp packages/installer/install.ps1 dist/install.ps1
+      - name: checksums
+        run: cd dist && sha256sum better-rust-setup.exe better-rust-agent.tar.gz install.ps1 > SHA256SUMS
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/better-rust-setup.exe
+            dist/better-rust-agent.tar.gz
+            dist/install.ps1
+      - name: VirusTotal
+        id: vt
+        env:
+          VT_API_KEY: ${{ secrets.VT_API_KEY }}
+        run: |
+          if [ -z "$VT_API_KEY" ]; then echo "report=(VirusTotal key not configured)" >> "$GITHUB_OUTPUT"; exit 0; fi
+          SHA=$(sha256sum dist/better-rust-setup.exe | cut -d' ' -f1)
+          UPLOAD=$(curl -s -H "x-apikey: $VT_API_KEY" https://www.virustotal.com/api/v3/files/upload_url | jq -r .data)
+          curl -s -H "x-apikey: $VT_API_KEY" -F "file=@dist/better-rust-setup.exe" "$UPLOAD" > /dev/null
+          echo "report=https://www.virustotal.com/gui/file/$SHA" >> "$GITHUB_OUTPUT"
+      - name: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > notes.md <<EOF
+          Install: \`powershell -ExecutionPolicy ByPass -c "irm https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/install.ps1 | iex"\`
+
+          - Built by this workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          - Verify: \`gh attestation verify better-rust-setup.exe -R ${GITHUB_REPOSITORY}\`
+          - VirusTotal: ${{ steps.vt.outputs.report }}
+          - The installer is not code-signed yet; Windows SmartScreen will warn. Checksums are in SHA256SUMS.
+          EOF
+          gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --notes-file notes.md
