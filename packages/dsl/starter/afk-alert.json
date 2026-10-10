@@ -1,0 +1,106 @@
+{
+  "name": "afk-alert",
+  "description": "Ping the team when an online teammate has not moved for 10 minutes. Once per AFK stretch.",
+  "version": 1,
+  "heuristic": "Rust+ has no AFK flag. 'AFK' means online and position unchanged for 10 min; someone standing still at a TC looks AFK.",
+  "trigger": {
+    "_tag": "Schedule",
+    "everySeconds": 60
+  },
+  "state": {
+    "alerted": []
+  },
+  "bindings": [],
+  "steps": [
+    {
+      "each": "team.filter(m, m.online && now - m.lastMovedAt >= 600.0 && !(m.steamId in state.alerted))",
+      "actions": [
+        {
+          "_tag": "TeamChat",
+          "text": "{{it.name}} looks AFK ({{int(minutes(now - it.lastMovedAt))}} min)"
+        }
+      ]
+    },
+    {
+      "actions": [
+        {
+          "_tag": "SetState",
+          "key": "alerted",
+          "value": "team.filter(m, m.online && now - m.lastMovedAt >= 600.0).map(m, m.steamId)"
+        }
+      ]
+    }
+  ],
+  "chatBudget": 3,
+  "tests": [
+    {
+      "name": "alerts once for a still teammate",
+      "world": {
+        "now": 1000.0,
+        "team": [
+          {
+            "steamId": "1",
+            "name": "Bob",
+            "lastMovedAt": 100.0
+          },
+          {
+            "steamId": "2",
+            "name": "Amy",
+            "lastMovedAt": 990.0
+          }
+        ]
+      },
+      "expect": [
+        {
+          "_tag": "TeamChat",
+          "contains": "Bob looks AFK (15 min)"
+        },
+        {
+          "_tag": "SetState",
+          "key": "alerted"
+        }
+      ]
+    },
+    {
+      "name": "does not repeat",
+      "world": {
+        "now": 1100.0,
+        "team": [
+          {
+            "steamId": "1",
+            "name": "Bob",
+            "lastMovedAt": 100.0
+          }
+        ]
+      },
+      "state": {
+        "alerted": ["1"]
+      },
+      "expect": [
+        {
+          "_tag": "SetState",
+          "key": "alerted"
+        }
+      ]
+    },
+    {
+      "name": "ignores offline",
+      "world": {
+        "now": 5000.0,
+        "team": [
+          {
+            "steamId": "1",
+            "name": "Bob",
+            "online": false
+          }
+        ]
+      },
+      "expect": [
+        {
+          "_tag": "SetState",
+          "key": "alerted"
+        }
+      ]
+    }
+  ]
+}

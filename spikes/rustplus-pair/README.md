@@ -15,10 +15,12 @@
 | "Login with Steam" → steamcommunity.com OpenID                                      | ok                | ok                            |
 | `/api/push/register` reachable (403 on bad token)                                   | ok                | —                             |
 
-## Not verified (needs a human with a Steam account + Rust running)
+Real Windows 11 host (user, 2026-10-10): `register` end to end ok: real Steam sign-in →
+`postMessage` delivered `{SteamId, Token}` → `/api/push/register` accepted. `listen` connects.
 
-- Real Steam sign-in → `postMessage` fires with `{SteamId, Token}`.
-- Pair notification → websocket connect → team chat send/receive.
+## Not verified yet
+
+- Pair notification → websocket connect → team chat send/receive (needs Rust running in game).
 
 ## Findings that change the design
 

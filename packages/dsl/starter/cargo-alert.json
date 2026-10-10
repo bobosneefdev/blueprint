@@ -1,0 +1,44 @@
+{
+  "name": "cargo-alert",
+  "description": "Announce in team chat when Cargo Ship spawns and when it leaves.",
+  "version": 1,
+  "trigger": {
+    "_tag": "Event",
+    "kind": "markerAppeared",
+    "filter": "event.kind == 'cargoShip'"
+  },
+  "state": {},
+  "bindings": [],
+  "steps": [
+    {
+      "actions": [
+        {
+          "_tag": "TeamChat",
+          "text": "Cargo Ship spawned at {{grid(event.x, event.y)}}"
+        }
+      ]
+    }
+  ],
+  "chatBudget": 2,
+  "tests": [
+    {
+      "name": "announces cargo with grid",
+      "world": {
+        "server": {
+          "mapSize": 4500
+        }
+      },
+      "event": {
+        "kind": "cargoShip",
+        "x": 1000.0,
+        "y": 4000.0
+      },
+      "expect": [
+        {
+          "_tag": "TeamChat",
+          "contains": "Cargo Ship spawned at G3"
+        }
+      ]
+    }
+  ]
+}

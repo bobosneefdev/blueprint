@@ -1,0 +1,32 @@
+#!/bin/sh
+# Default-deny outbound for the agent user. Root (boot, DNS resolution here) is unrestricted.
+# ponytail: IPs are resolved once at boot; CDN-backed hosts rotate IPs, so long sessions can lose
+# reach. Upgrade path: local DNS proxy (dnsmasq --ipset/nftset) that adds IPs as they resolve.
+set -u
+AGENT_UID=$(id -u agent)
+WIN_HOST=$(ip route show default | awk '{print $3}')
+
+for ipt in iptables ip6tables; do
+  $ipt -F OUTPUT
+  $ipt -A OUTPUT -o lo -j ACCEPT
+  $ipt -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+  $ipt -A OUTPUT -m owner ! --uid-owner "$AGENT_UID" -j ACCEPT
+  $ipt -A OUTPUT -p udp --dport 53 -j ACCEPT
+  $ipt -A OUTPUT -p tcp --dport 53 -j ACCEPT
+done
+
+# The Windows bot's RPC port (the `bot` CLI). Nothing else on the host is reachable.
+iptables -A OUTPUT -d "$WIN_HOST" -p tcp --dport "${BOT_RPC_PORT:-47615}" -j ACCEPT
+
+grep -v '^\s*#' /etc/egress-allow.txt | while read -r host; do
+  [ -z "$host" ] && continue
+  for ip in $(dig +short A "$host" | grep -E '^[0-9.]+$'); do
+    iptables -A OUTPUT -d "$ip" -p tcp --dport 443 -j ACCEPT
+  done
+  for ip in $(dig +short AAAA "$host" | grep ':'); do
+    ip6tables -A OUTPUT -d "$ip" -p tcp --dport 443 -j ACCEPT
+  done
+done
+
+iptables -A OUTPUT -j REJECT
+ip6tables -A OUTPUT -j REJECT

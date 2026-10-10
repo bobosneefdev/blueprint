@@ -1,0 +1,12 @@
+# Hosts the agent may reach (HTTPS only). Resolved to IPs at boot by egress-firewall.
+# Claude Code
+api.anthropic.com
+claude.ai
+console.anthropic.com
+statsig.anthropic.com
+# Codex
+api.openai.com
+auth.openai.com
+chatgpt.com
+# Pi (provider endpoints; extend per configured provider)
+openrouter.ai
