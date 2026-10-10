@@ -14,6 +14,8 @@ export interface Deps {
   /** Token for the `bot` CLI inside the sandbox for this run. */
   readonly rotateRpcToken: () => string;
   readonly rpcUrl: string;
+  /** Windows: import/mount the WSL sandbox. Throws with a user-facing reason if unavailable. */
+  readonly prepareSandbox: () => void;
 }
 
 /** On Windows, every harness runs inside the locked-down distro as the agent user. */
@@ -50,6 +52,8 @@ export const make = (deps: Deps) => {
 
     try {
       await deps.chat(`${name}: on it…`);
+
+      if (process.platform === "win32") deps.prepareSandbox();
 
       const { kind, model } = deps.harness();
       const token = deps.rotateRpcToken();
@@ -91,6 +95,11 @@ export const make = (deps: Deps) => {
       const link = settings.portalUrl === undefined ? undefined : `${settings.portalUrl}/r/${id}`;
 
       for (const line of Agent.chatLines(body, link)) await deps.chat(line);
+    } catch (e) {
+      console.error("agent run failed", e);
+      await deps.chat(
+        `${name}: agent unavailable (${e instanceof Error ? e.message : String(e)})`.slice(0, 120),
+      );
     } finally {
       queue.finish(steamId);
     }

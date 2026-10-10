@@ -10,6 +10,8 @@ import { createServer } from "node:http";
 import { join } from "node:path";
 import * as AgentRunner from "./AgentRunner.ts";
 import * as Config from "./Config.ts";
+import * as GameData from "./GameData.ts";
+import * as Sandbox from "./Sandbox.ts";
 import * as SteamLogin from "./SteamLogin.ts";
 
 let config = await Config.load();
@@ -23,6 +25,16 @@ const workspaceDir = join(home, "workspace");
 const BOT_PREFIX = "[bot] ";
 
 Workspace.init(workspaceDir);
+
+// Game data for the agent (`bot items`, `bot raid`, rg/jq). Refreshed on start and daily.
+const syncGameData = () =>
+  GameData.sync(join(home, "rust-items-json")).catch((e) =>
+    console.warn("game data sync failed", e),
+  );
+
+void syncGameData();
+
+setInterval(syncGameData, 24 * 3600_000);
 
 const pluginsRef = Effect.runSync(Ref.make<ReadonlyArray<Workspace.Loaded>>([]));
 
@@ -126,6 +138,7 @@ const runAgent = AgentRunner.make({
   replies,
   rotateRpcToken: () => (rpcToken = randomBytes(24).toString("base64url")),
   rpcUrl: `http://127.0.0.1:${config.rpcPort}`,
+  prepareSandbox: () => Sandbox.prepare(home),
 });
 
 /** "@bot yes" / "@bot undo" are handled here; everything else goes to the harness. */
