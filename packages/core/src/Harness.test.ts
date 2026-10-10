@@ -26,7 +26,7 @@ test("parses each harness's final reply and session", () => {
 });
 
 test("resume flags per harness", () => {
-  const base = { prompt: "hi", systemPrompt: "sys", session: "x" };
+  const base = { prompt: "hi", systemPrompt: "sys", session: "x", model: undefined };
 
   expect(argv({ ...base, kind: "claude" })).toContain("--resume");
   expect(argv({ ...base, kind: "codex" }).slice(0, 4)).toEqual(["codex", "exec", "resume", "x"]);

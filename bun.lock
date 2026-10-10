@@ -14,6 +14,15 @@
         "typescript": "7.0.2",
       },
     },
+    "apps/bot": {
+      "name": "@better-rust/bot",
+      "dependencies": {
+        "@better-rust/core": "workspace:*",
+        "@better-rust/dsl": "workspace:*",
+        "@better-rust/portal": "workspace:*",
+        "effect": "4.0.2",
+      },
+    },
     "apps/portal": {
       "name": "@better-rust/portal",
       "version": "0.0.1",
@@ -66,6 +75,8 @@
     },
   },
   "packages": {
+    "@better-rust/bot": ["@better-rust/bot@workspace:apps/bot"],
+
     "@better-rust/cli": ["@better-rust/cli@workspace:packages/cli"],
 
     "@better-rust/core": ["@better-rust/core@workspace:packages/core"],

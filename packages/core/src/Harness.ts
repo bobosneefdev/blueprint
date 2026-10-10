@@ -11,9 +11,9 @@ export interface Turn {
   readonly kind: Kind;
   readonly prompt: string;
   /** Harness session/thread id from a previous turn; undefined starts a new session. */
-  readonly session?: string;
+  readonly session: string | undefined;
   readonly systemPrompt: string;
-  readonly model?: string;
+  readonly model: string | undefined;
 }
 
 export interface Reply {

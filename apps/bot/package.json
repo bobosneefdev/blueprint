@@ -1,0 +1,16 @@
+{
+  "name": "@better-rust/bot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test --pass-with-no-tests",
+    "dev": "bun src/main.ts"
+  },
+  "dependencies": {
+    "@better-rust/core": "workspace:*",
+    "@better-rust/dsl": "workspace:*",
+    "@better-rust/portal": "workspace:*",
+    "effect": "4.0.2"
+  }
+}

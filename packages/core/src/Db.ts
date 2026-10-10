@@ -99,3 +99,10 @@ export const prune = (db: Db, serverId: string, now: number) =>
 
 export const wipeRecordings = (db: Db, serverId: string) =>
   db.delete(recordings).where(eq(recordings.serverId, serverId)).run();
+
+export type ServerRow = typeof servers.$inferSelect;
+
+export const listServers = (db: Db): ServerRow[] => db.select().from(servers).all();
+
+export const upsertServer = (db: Db, row: typeof servers.$inferInsert) =>
+  db.insert(servers).values(row).onConflictDoUpdate({ target: servers.id, set: row }).run();
