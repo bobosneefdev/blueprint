@@ -11,6 +11,7 @@
     "@better-rust/core": "workspace:*",
     "@better-rust/dsl": "workspace:*",
     "@better-rust/portal": "workspace:*",
-    "effect": "4.0.2"
+    "effect": "4.0.2",
+    "playwright-core": "1.64.0"
   }
 }

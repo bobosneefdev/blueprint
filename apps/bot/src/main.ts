@@ -2,7 +2,7 @@
 //   portal  127.0.0.1:portalPort  -> exposed via Cloudflare quick tunnel, Steam-login gated
 //   rpc     127.0.0.1:rpcPort     -> `bot` CLI inside WSL (mirrored networking), token-gated
 //   servers one Rust+ websocket per paired server, plugin runtime + recorder
-import { Db, Rpc, RustPlus, Server, Tunnel, Workspace } from "@better-rust/core";
+import { Db, Pairing, Rpc, RustPlus, Server, Tunnel, Workspace } from "@better-rust/core";
 import type { Plugin, World } from "@better-rust/dsl";
 import { Effect, Ref, Schedule, Stream } from "effect";
 import { randomBytes } from "node:crypto";
@@ -10,8 +10,9 @@ import { createServer } from "node:http";
 import { join } from "node:path";
 import * as AgentRunner from "./AgentRunner.ts";
 import * as Config from "./Config.ts";
+import * as SteamLogin from "./SteamLogin.ts";
 
-const config = await Config.load();
+let config = await Config.load();
 
 const home = Config.dataDir();
 
@@ -80,6 +81,8 @@ attach({
     await reloadPlugins();
   },
   reply: (id) => replies.get(id),
+  pairing: () => ({ signedIn: config.rustplus !== undefined, hostSteamId: config.hostSteamId }),
+  pair: () => pair(),
 });
 
 const { handler } = await import(join(import.meta.dir, "../../portal/build/handler.js"));
@@ -189,7 +192,73 @@ const runServer = (s: Db.ServerRow) =>
     Effect.retry(Schedule.min([Schedule.exponential("2 seconds"), Schedule.spaced("1 minute")])),
   );
 
-for (const s of Db.listServers(db)) Effect.runFork(runServer(s));
+const running = new Set<string>();
+
+const startServer = (s: Db.ServerRow) => {
+  if (running.has(s.id)) return;
+
+  running.add(s.id);
+  Effect.runFork(runServer(s));
+};
+
+for (const s of Db.listServers(db)) startServer(s);
+
+// ── Pairing ──────────────────────────────────────────────────────────────────────────────────────
+// In-game "Pair with Server" arrives over FCM; servers are added and started automatically.
+let stopListening: (() => void) | undefined;
+
+const listenForPairs = () => {
+  const rp = config.rustplus;
+
+  if (rp === undefined) return;
+
+  stopListening?.();
+  stopListening = Pairing.listen(
+    { fcm: rp.fcm, expoPushToken: "" },
+    rp.persistentIds,
+    (n, persistentId) => {
+      config = {
+        ...config,
+        rustplus: { ...rp, persistentIds: [...rp.persistentIds, persistentId].slice(-200) },
+      };
+      void Config.save(config);
+
+      if (n.type !== "server") return;
+
+      const row = {
+        id: n.id,
+        name: n.name,
+        ip: n.ip,
+        port: n.port,
+        playerId: n.playerId,
+        playerToken: n.playerToken,
+      };
+
+      Db.upsertServer(db, row);
+      startServer({ ...row, wipeTime: 0 });
+      console.log(`paired ${n.name}`);
+    },
+  );
+};
+
+/** Portal "Pair" button: Steam sign-in on this PC, then register for pair notifications. */
+const pair = async () => {
+  const device = await Pairing.registerDevice();
+  const { steamId, authToken } = await SteamLogin.signIn();
+
+  await Pairing.registerPush(authToken, device.expoPushToken);
+  config = {
+    ...config,
+    hostSteamId: config.hostSteamId === "" ? steamId : config.hostSteamId,
+    rustplus: { authToken, fcm: device.fcm, persistentIds: [] },
+  };
+  await Config.save(config);
+  listenForPairs();
+
+  return steamId;
+};
+
+listenForPairs();
 
 // ── Tunnel ───────────────────────────────────────────────────────────────────────────────────────
 const cloudflared =

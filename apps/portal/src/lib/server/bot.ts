@@ -26,6 +26,9 @@ export interface Bot {
   readonly setEnabled: (name: string, enabled: boolean, by: string) => Promise<void>;
   readonly rollback: (name: string, commit: string, by: string) => Promise<void>;
   readonly reply: (id: string) => string | undefined;
+  readonly pairing: () => { readonly signedIn: boolean; readonly hostSteamId: string };
+  /** Opens Steam sign-in on the host PC; resolves with the signed-in SID64. */
+  readonly pair: () => Promise<string>;
 }
 
 // The portal is bundled separately from the bot, so module state is not shared; a global is the
