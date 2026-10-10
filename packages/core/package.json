@@ -1,0 +1,17 @@
+{
+  "name": "@better-rust/core",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test --pass-with-no-tests"
+  },
+  "dependencies": {
+    "@better-rust/dsl": "workspace:*",
+    "@effect/platform-bun": "4.0.2",
+    "@liamcottle/rustplus.js": "2.5.0",
+    "drizzle-orm": "0.45.4",
+    "effect": "4.0.2"
+  }
+}

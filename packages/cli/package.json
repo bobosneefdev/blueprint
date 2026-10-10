@@ -1,0 +1,15 @@
+{
+  "name": "@better-rust/cli",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test --pass-with-no-tests"
+  },
+  "dependencies": {
+    "@better-rust/dsl": "workspace:*",
+    "@effect/platform-bun": "4.0.2",
+    "effect": "4.0.2"
+  }
+}

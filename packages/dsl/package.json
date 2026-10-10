@@ -1,0 +1,14 @@
+{
+  "name": "@better-rust/dsl",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test --pass-with-no-tests"
+  },
+  "dependencies": {
+    "@marcbachmann/cel-js": "8.0.0",
+    "effect": "4.0.2"
+  }
+}

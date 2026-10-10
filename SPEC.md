@@ -1,0 +1,154 @@
+# better-rust — Spec (codename)
+
+LLM-authored Rust+ team bot. Players request features in team chat; an agent harness writes
+validated, tested plugins in a declarative DSL; the bot runs them.
+
+## Product
+
+- **Self-hosted, Windows only.** One-line install:
+  `powershell -ExecutionPolicy ByPass -c "irm https://<site>/install.ps1 | iex"`.
+- **Open source, AGPL-3.0, reputation first.** No telemetry, no payments. Only phone-home is the
+  update check against GitHub Releases.
+- **Launch:** r/playrust + 60s demo video ("@bot alert me when cargo spawns" → alert fires).
+- **Trust (ships unsigned):** public CI builds with SHA256 sums + build provenance attestations,
+  VirusTotal link per release, "Not a cheat" FAQ (official Rust+ API only, no game memory, no EAC
+  interaction), short commented readable `install.ps1`.
+
+## Identity & permissions
+
+- Steam OpenID is the only login, for the portal and for anything else. SID64 is the sole identity.
+- Non-host, non-allowlisted SID64 → 403.
+- **Host + allowlist:** talk to the agent, create/edit/disable plugins.
+- **Any teammate:** run existing plugin `/commands`, per-user rate limited.
+
+## Chat UX
+
+- `@<name> <request>` → agent. Name configurable in settings, default `bot`.
+- `/<command>` → installed plugin. Unknown commands suggest closest match; never fall to the LLM.
+- Instant ack ("on it…"), reply in 1–3 messages (~128 chars each), overflow →
+  `full answer: <portal>/r/<id>`. One agent job per requester; others queue.
+- Every `@bot` message goes to the harness; the system prompt routes Q&A vs plugin authoring.
+- Impossible requests (AFK, inventory, enemies, raids w/o alarm): say what's unavailable, offer the
+  closest labelled heuristic. Never fake it.
+
+## Agent
+
+- **Harnesses:** Claude Code, Codex, Pi — driven headless via their JSON stream modes, T3 Code
+  style. All run with permission prompts bypassed; the sandbox is the boundary.
+- **Sandbox:** dedicated WSL2 distro `better-rust-agent` (`wsl --import` of a minimal rootfs).
+  `/etc/wsl.conf`: automount off, interop off. Non-root user. Sees only `/workspace` and read-only
+  `/data/rust-items-json`. Network: LLM provider endpoints only.
+- **Auth:** portal "Harnesses" page runs `claude login` / `codex login` inside the distro and relays
+  the URL to the host's browser; Pi takes a pasted provider key. Credentials never leave the distro.
+- **Sessions:** one resumable harness session per SID64; reset on idle timeout or wipe.
+- **Interface:** workspace files + `bot` CLI. CLI talks to the Windows bot over localhost RPC with a
+  per-session token.
+  - `bot team | markers | time | info | devices` — live data
+  - `bot items search|get` — game data
+  - `bot validate <plugin>` — schema + fixture tests
+  - `bot dry-run <plugin> [--from 2h]` — replay recordings, report what would fire
+  - `bot propose <plugin>` — post chat summary, await requester confirm
+
+## Plugin DSL
+
+Effect Schema is the single source of truth (types, validation, JSON Schema for the agent).
+
+```
+Plugin {
+  name, description, version
+  trigger:  Command{name,args} | Schedule{every|cron} | CommandAndSchedule | Event{kind,filter}
+  conditions: CEL expressions
+  state:    declared keys + defaults (KV per plugin per server)
+  actions:  TeamChat | SmartSwitch{binding,on} | SetState | Notify{toast|ntfy}
+  bindings: named slots (entity ids, coordinates) filled per server
+  heuristic?: label shown when logic approximates unavailable data
+  tests:    fixtures { input events/snapshots → expected actions }   (required)
+}
+```
+
+- Expressions: **CEL** (non-Turing-complete, no I/O).
+- Event kinds: team changes, markers (cargo/heli/chinook/vending), smart alarm/switch/storage,
+  team chat, time-of-day, wipe.
+
+## Runtime
+
+- **Central poller:** one poll per data source per server, fanned out to subscribed plugins. Respects
+  Rust+ per-player/per-IP token buckets.
+- **Chat budget:** per-plugin message budget, duplicate coalescing.
+- **Go-live:** `validate` (schema + fixtures) → `dry-run` (replay) → chat summary → requester
+  confirms → git commit → active. `@bot undo` / portal click rolls back.
+- **Recording:** all polled + pushed data (team chat text excluded by default) into SQLite,
+  compressed, rolling 7 days per server, pruned on wipe.
+- **Wipe:** detected via seed/wipe-time change. Plugins persist; bound plugins pause as
+  `unbound`; bot asks to re-pair/redefine.
+- **Multi-server:** one instance, many paired servers.
+
+## Workspace (git repo, mounted into WSL)
+
+```
+plugins/<name>.json            global logic
+servers/<id>/bindings.json     entity ids, coords, enabled flags
+```
+
+## Game data
+
+`bobosneefdev/rust-items-json` pulled on startup + daily, mounted read-only for the agent,
+queryable via `bot items`, readable by plugins at runtime.
+
+## Portal
+
+SvelteKit, served by the sidecar, exposed through a Cloudflare quick tunnel. URL changes every
+start: bot posts it to team chat + tray; OpenID `return_to` derived from the current URL.
+Pages: pairing (guided Rust+ companion login / FCM register, auto-accept in-game pair
+notifications), plugins (list, diff, history, enable/disable, rollback), logs, harnesses, settings
+(bot name, allowlist, ntfy topic), gallery import, live map (Three.js WebGPU).
+
+## v1 scope
+
+Core + starter plugin pack (~10 reviewed), gallery (export/import), multi-server, recorded replay.
+
+## Gallery
+
+`better-rust-plugins` GitHub repo. PRs validated by CI against the DSL schema. Landing site builds
+a browsable index at deploy. Portal imports from raw GitHub URLs.
+
+## Distribution & updates
+
+- Tauri tray app wrapping a Bun sidecar (`bun build --compile`) containing bot + portal + RPC.
+- `install.ps1` → enables WSL if needed, downloads Tauri installer + rootfs, `wsl --import`.
+- Tauri updater + GitHub Releases, stable/beta channel. Updates app, sidecar and rootfs together.
+- Unsigned at launch.
+
+## Stack
+
+| Concern                         | Choice                                                                        |
+| ------------------------------- | ----------------------------------------------------------------------------- |
+| Language / runtime / pm / tests | TypeScript, Bun                                                               |
+| Types, schemas, services        | Effect v4 everywhere (incl. SvelteKit server), `effect/cli`, `effect/rpc`     |
+| Monorepo                        | Turborepo                                                                     |
+| Bundler                         | tsdown (packages), Vite (SvelteKit)                                           |
+| Lint / format                   | Oxlint + vendored anti-slop (generic + Effect rules), Oxfmt                   |
+| Web                             | Svelte 5, SvelteKit, DaisyUI, Bits UI, Motion, Shaders.com, Three.js (WebGPU) |
+| Desktop                         | Tauri 2                                                                       |
+| DB                              | SQLite (`bun:sqlite`) + Drizzle                                               |
+| Rust+                           | `@liamcottle/rustplus.js` (pinned)                                            |
+| Expressions                     | CEL                                                                           |
+| Site                            | Cloudflare Pages (landing, docs, `install.ps1`, gallery index)                |
+| CI / releases                   | GitHub Actions + Releases                                                     |
+
+## Repo layout
+
+```
+apps/desktop    Tauri tray shell (Rust)
+apps/portal     SvelteKit portal (served by sidecar)
+apps/site       Cloudflare Pages landing/docs/gallery index
+packages/core   bot runtime: Rust+ client, poller, scheduler, plugin engine, recorder, RPC server
+packages/dsl    plugin schema (Effect Schema) + CEL evaluation
+packages/cli    `bot` CLI used by the agent inside WSL
+packages/installer  install.ps1 + WSL rootfs build
+tools/oxlint/anti-slop  vendored lint rules
+```
+
+## Open
+
+- Project name (codename `better-rust`).

@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.turbo/
+.svelte-kit/
+target/
+*.db
+*.db-*
+.env*

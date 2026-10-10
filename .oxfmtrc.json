@@ -1,0 +1,9 @@
+{
+  "ignorePatterns": [
+    ".agents/**",
+    ".claude/**",
+    "tools/oxlint/anti-slop/**",
+    "LICENSE",
+    "skills-lock.json"
+  ]
+}
