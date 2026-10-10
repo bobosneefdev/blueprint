@@ -55,6 +55,7 @@ const refreshAgentShare = async () => {
 const prepareSandbox = async () => {
   await refreshAgentShare();
   Sandbox.prepare(home, agentShare);
+  rebindRpc();
 };
 
 const BOT_PREFIX = "[bot] ";
@@ -226,9 +227,9 @@ createServer(handler)
 
 // ── RPC for the sandboxed CLI ────────────────────────────────────────────────────────────────────
 // Windows: listen on the WSL vEthernet address so the sandbox can reach us; never 0.0.0.0 (LAN).
-// The WSL adapter exists once WSL has started any distro; before the sandbox is set up, loopback
-// is fine (no agent can run yet). Restart picks up the adapter.
-const rpcHost = (process.platform === "win32" && Sandbox.hostAddress()) || "127.0.0.1";
+// Before the sandbox is installed no agent can run, so loopback is fine; prepareSandbox restarts
+// the RPC listener on the adapter once the distro exists (see rebindRpc).
+let rpcHost = (process.platform === "win32" && Sandbox.bootAndAddress()) || "127.0.0.1";
 
 const rpcServe = () =>
   Bun.serve({
@@ -263,11 +264,26 @@ const rpcServe = () =>
     }),
   });
 
+let rpcServer: ReturnType<typeof rpcServe> | undefined;
+
 try {
-  rpcServe();
+  rpcServer = rpcServe();
 } catch (e) {
   // SAFETY: Bun.serve throws Node-style errno errors; portInUse rethrows anything else.
   portInUse(config.rpcPort)(e as NodeJS.ErrnoException);
+}
+
+/** First sandbox setup creates the WSL adapter; move the RPC listener onto it (once). */
+function rebindRpc() {
+  if (process.platform !== "win32" || rpcHost !== "127.0.0.1") return;
+
+  const ip = Sandbox.bootAndAddress();
+
+  if (ip === undefined) return;
+
+  rpcServer?.stop();
+  rpcHost = ip;
+  rpcServer = rpcServe();
 }
 
 // ── Agent ────────────────────────────────────────────────────────────────────────────────────────
@@ -289,7 +305,7 @@ const runAgent = AgentRunner.make({
 
     return { token, revoke: () => void rpcTokens.delete(token) };
   },
-  rpcUrl: `http://${rpcHost}:${config.rpcPort}`,
+  rpcUrl: () => `http://${rpcHost}:${config.rpcPort}`,
   prepareSandbox,
 });
 

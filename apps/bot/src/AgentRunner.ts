@@ -18,7 +18,8 @@ export interface Deps {
     readonly token: string;
     readonly revoke: () => void;
   };
-  readonly rpcUrl: string;
+  /** Read per job: the RPC listener moves to the WSL adapter after first sandbox setup. */
+  readonly rpcUrl: () => string;
   /** Windows: import/mount the WSL sandbox. Throws with a user-facing reason if unavailable. */
   readonly prepareSandbox: () => Promise<void>;
   /** Runs the harness; injectable for tests. */
@@ -134,7 +135,7 @@ export const make = (deps: Deps) => {
       session: previous,
     });
 
-    const env = { BOT_RPC_URL: deps.rpcUrl, BOT_RPC_TOKEN: token };
+    const env = { BOT_RPC_URL: deps.rpcUrl(), BOT_RPC_TOKEN: token };
 
     const { stdout, exitCode } = await run(argv, env).finally(revoke);
 

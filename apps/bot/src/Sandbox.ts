@@ -59,6 +59,26 @@ export const hostAddress = () => {
   return /^\d{1,3}(\.\d{1,3}){3}$/.test(ip) ? ip : undefined;
 };
 
+/**
+ * Brings WSL up (its vEthernet adapter only exists while a distro runs) and returns the host-side
+ * address, or undefined if the sandbox isn't installed yet. Bounded: ~10s worst case.
+ */
+export const bootAndAddress = () => {
+  if (!installed()) return undefined;
+
+  wsl("-d", DISTRO, "-u", "root", "--", "true");
+
+  for (let i = 0; i < 10; i++) {
+    const ip = hostAddress();
+
+    if (ip !== undefined) return ip;
+
+    Bun.sleepSync(1000);
+  }
+
+  return undefined;
+};
+
 /** Single-quoted for sh; Windows paths can contain spaces (user names). */
 const q = (s: string) => `'${s.replaceAll("'", `'"'"'`)}'`;
 

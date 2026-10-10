@@ -35,7 +35,7 @@ const harness = (deps: { run: Run }) => {
 
       return { token: "tok", revoke: () => void live.delete("tok") };
     },
-    rpcUrl: "http://127.0.0.1:1",
+    rpcUrl: () => "http://127.0.0.1:1",
     prepareSandbox: async () => {},
     run: deps.run,
   });
