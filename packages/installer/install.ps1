@@ -78,4 +78,14 @@ Say "Installing the app..."
 Start-Process (Join-Path $tmp "blueprint-setup.exe") -ArgumentList "/S" -Wait
 Remove-Item -Recurse -Force $tmp
 
-Say "Done. Blueprint is in your tray. Open it and click 'Connect Rust+' to sign in."
+# A silent NSIS install doesn't launch the app; start it and open the portal once it answers.
+Start-Process (Join-Path $Home_ "blueprint.exe")
+$portal = "http://127.0.0.1:47614"
+for ($i = 0; $i -lt 30; $i++) {
+  Start-Sleep 1
+  try { Invoke-WebRequest $portal -UseBasicParsing -MaximumRedirection 0 -TimeoutSec 2 | Out-Null; break }
+  catch { if ($_.Exception.Response) { break } }
+}
+Start-Process $portal
+
+Say "Done. Blueprint is in your tray, and the portal is open in your browser: sign in with Steam on the Pair page."
