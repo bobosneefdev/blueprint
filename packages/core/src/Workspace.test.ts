@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Validate } from "@better-rust/dsl";
+import { Validate } from "@blueprint/dsl";
 import { chmodSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

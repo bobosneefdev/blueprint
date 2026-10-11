@@ -1,7 +1,7 @@
 // Per-server plugin runtime: routes ticks, events and chat commands to plugins, enforces chat
 // budgets, and hands effects to a sink. Stateless apart from per-plugin state + budget windows,
 // so the same code drives live servers and `bot dry-run` replay.
-import { Cel, Engine, type Plugin, Trigger, type ValueMap, type World } from "@better-rust/dsl";
+import { Cel, Engine, type Plugin, Trigger, type ValueMap, type World } from "@blueprint/dsl";
 import { Data, Result } from "effect";
 import type { Event } from "./Snapshot.ts";
 

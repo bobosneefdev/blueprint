@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
-// `bot`: the agent's interface to better-rust. Runs inside the WSL sandbox.
+// `bot`: the agent's interface to blueprint. Runs inside the WSL sandbox.
 //
 // Offline (no bot needed): schema, validate, items, raid.
 // Live (talks to the Windows bot over localhost RPC): team, markers, info, dry-run, propose.
 // Output is compact JSON on stdout so agents can read it directly.
 import { BunRuntime, BunServices } from "@effect/platform-bun";
-import { Validate } from "@better-rust/dsl";
+import { Validate } from "@blueprint/dsl";
 import { Config, Console, Effect, Option, Redacted, Schema } from "effect";
 import { Argument, Command, Flag } from "effect/cli";
 import * as Items from "./Items.ts";
@@ -129,7 +129,7 @@ const propose = Command.make("propose", { file: Argument.String("plugin.json") }
 ).pipe(Command.withDescription("Ask the requester to confirm activation in team chat"));
 
 const bot = Command.make("bot").pipe(
-  Command.withDescription("better-rust agent tools"),
+  Command.withDescription("blueprint agent tools"),
   Command.withSubcommands([
     schema,
     validate,

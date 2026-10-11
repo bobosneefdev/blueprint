@@ -1,12 +1,14 @@
-# better-rust (codename)
+# Blueprint
 
 A Rust+ team bot you program by asking. Type what you want in team chat; an AI writes a small
 plugin, tests it against your server's recent data, and runs it once you confirm.
 
 ```
 You:   @bot ping us when cargo spawns, with the grid
-[bot]  cargo-alert: Cargo Ship spawned → chat with grid. Reply @bot yes to activate
-You:   @bot yes
+[bot]  @bot yes 4821 to activate: <portal link>
+[bot]  new cargo-alert [chat]
+You:   @bot yes 4821
+[bot]  cargo-alert is live
 [bot]  Cargo Ship spawned at G3
 ```
 
@@ -16,7 +18,7 @@ API: no game memory, no Easy Anti-Cheat interaction.
 ## Install
 
 ```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://github.com/bobosneefdev/better-rust/releases/latest/download/install.ps1 | iex"
+powershell -ExecutionPolicy ByPass -c "irm https://blueprint.bobosneef.dev/install.ps1 | iex"
 ```
 
 [Read the script](packages/installer/install.ps1) first. It sets up WSL if needed, downloads the

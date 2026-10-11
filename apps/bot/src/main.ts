@@ -1,4 +1,4 @@
-// better-rust bot: the Bun sidecar the Tauri tray launches.
+// blueprint bot: the Bun sidecar the Tauri tray launches.
 //   portal  127.0.0.1:portalPort  -> exposed via Cloudflare quick tunnel, Steam-login gated
 //   rpc     127.0.0.1:rpcPort     -> `bot` CLI inside WSL (mirrored networking), token-gated
 //   servers one Rust+ websocket per paired server, plugin runtime + recorder
@@ -12,8 +12,8 @@ import {
   Server,
   Tunnel,
   Workspace,
-} from "@better-rust/core";
-import { Starters, Validate, type World } from "@better-rust/dsl";
+} from "@blueprint/core";
+import { Starters, Validate, type World } from "@blueprint/dsl";
 import { Effect, Ref, Schedule, Stream } from "effect";
 import { randomBytes } from "node:crypto";
 import { createServer } from "node:http";
@@ -31,7 +31,7 @@ let config = await Config.load();
 
 const home = Config.dataDir();
 
-const db = Db.open(join(home, "better-rust.db"));
+const db = Db.open(join(home, "blueprint.db"));
 
 const workspaceDir = join(home, "workspace");
 
@@ -126,7 +126,7 @@ const chatAll = async (line: string) => {
 };
 
 // ── Portal ───────────────────────────────────────────────────────────────────────────────────────
-const { attach } = await import("@better-rust/portal/src/lib/server/bot.ts");
+const { attach } = await import("@blueprint/portal/src/lib/server/bot.ts");
 
 attach({
   sessionSecret: config.sessionSecret,
@@ -207,17 +207,17 @@ attach({
 });
 
 // Packaged: Tauri passes the bundled portal dir. Dev: the sibling app's build output.
-const portalDir = process.env.BETTER_RUST_PORTAL ?? join(import.meta.dir, "../../portal/build");
+const portalDir = process.env.BLUEPRINT_PORTAL ?? join(import.meta.dir, "../../portal/build");
 
 const { handler } = await import(join(portalDir, "handler.js"));
 
-// Another better-rust (or anything) on our ports means a second copy; exit with a clear message
+// Another blueprint (or anything) on our ports means a second copy; exit with a clear message
 // instead of a stack trace. The tray app is single-instance, so this is mostly dev or a stale exe.
 const portInUse = (port: number) => (e: NodeJS.ErrnoException) => {
   if (e.code !== "EADDRINUSE") throw e;
 
-  console.error(`better-rust: port ${port} is in use. Is better-rust already running?`);
-  Notify.toast("better-rust", `Port ${port} is in use. Is better-rust already running?`);
+  console.error(`blueprint: port ${port} is in use. Is blueprint already running?`);
+  Notify.toast("blueprint", `Port ${port} is in use. Is blueprint already running?`);
   process.exit(1);
 };
 
@@ -522,7 +522,7 @@ const pair = async () => {
 
       const msg = `Rust+ sign-in expired. Open the portal on this PC and sign in again (${e instanceof Error ? e.message : e}).`;
 
-      Notify.toast("better-rust", msg);
+      Notify.toast("blueprint", msg);
       await chatAll("Rust+ sign-in expired: host, re-sign in from the portal on your PC.");
     }
   };
@@ -552,7 +552,7 @@ const checkRustPlusAuth = async () => {
 
     const msg = `Rust+ sign-in expired. Open the portal on this PC and sign in again (${e instanceof Error ? e.message : e}).`;
 
-    Notify.toast("better-rust", msg);
+    Notify.toast("blueprint", msg);
     await chatAll("Rust+ sign-in expired: host, re-sign in from the portal on your PC.");
   }
 };
@@ -576,4 +576,4 @@ Effect.runFork(
   ).pipe(Effect.tapError((e) => Effect.logWarning("tunnel unavailable; portal is local only", e))),
 );
 
-console.log(`better-rust running. portal http://127.0.0.1:${config.portalPort}, data ${home}`);
+console.log(`blueprint running. portal http://127.0.0.1:${config.portalPort}, data ${home}`);

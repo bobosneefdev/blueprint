@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Validate } from "@better-rust/dsl";
+import { Validate } from "@blueprint/dsl";
 import { replay } from "./Replay.ts";
 
 test("replays recorded worlds and events through a plugin", async () => {

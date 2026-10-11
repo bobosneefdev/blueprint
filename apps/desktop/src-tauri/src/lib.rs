@@ -1,4 +1,4 @@
-// Tray shell for better-rust. No windows: the portal (in the browser) is the UI.
+// Tray shell for Blueprint. No windows: the portal (in the browser) is the UI.
 // Owns the Bun sidecar (bot + portal + RPC): starts it, restarts it if it dies, stops it on quit.
 use std::sync::Mutex;
 use std::time::Duration;
@@ -26,10 +26,10 @@ fn spawn_sidecar(app: &AppHandle) {
         .map(|d| d.join("portal"))
         .unwrap_or_default();
 
-    let cmd = match app.shell().sidecar("better-rust-bot") {
+    let cmd = match app.shell().sidecar("blueprint-bot") {
         Ok(c) => c
-            .env("BETTER_RUST_PORTAL", &portal_dir)
-            .env("BETTER_RUST_GIT", portal_dir.with_file_name("mingit").join("cmd").join("git.exe")),
+            .env("BLUEPRINT_PORTAL", &portal_dir)
+            .env("BLUEPRINT_GIT", portal_dir.with_file_name("mingit").join("cmd").join("git.exe")),
         Err(e) => {
             eprintln!("sidecar missing: {e}");
             return;
@@ -98,12 +98,12 @@ pub fn run() {
         .setup(|app| {
             let open = MenuItem::with_id(app, "open", "Open portal", true, None::<&str>)?;
             let update = MenuItem::with_id(app, "update", "Check for updates", true, None::<&str>)?;
-            let quit = MenuItem::with_id(app, "quit", "Quit better-rust", true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, "quit", "Quit Blueprint", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&open, &update, &quit])?;
 
             TrayIconBuilder::new()
                 .icon(app.default_window_icon().cloned().expect("bundled icon"))
-                .tooltip("better-rust")
+                .tooltip("Blueprint")
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "open" => {
@@ -126,7 +126,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error while building better-rust")
+        .expect("error while building Blueprint")
         .run(|app, event| {
             if let tauri::RunEvent::ExitRequested { .. } = event {
                 stop_sidecar(app);

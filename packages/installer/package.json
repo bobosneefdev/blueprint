@@ -1,5 +1,5 @@
 {
-  "name": "@better-rust/installer",
+  "name": "@blueprint/installer",
   "private": true,
   "type": "module"
 }

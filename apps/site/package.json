@@ -1,5 +1,5 @@
 {
-  "name": "@better-rust/site",
+  "name": "@blueprint/site",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -17,7 +17,7 @@
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "@better-rust/dsl": "workspace:*"
+    "@blueprint/dsl": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^4.0.0",

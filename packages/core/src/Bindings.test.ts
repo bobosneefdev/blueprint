@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Validate } from "@better-rust/dsl";
+import { Validate } from "@blueprint/dsl";
 import { addDevice, forServer, missing } from "./Bindings.ts";
 
 const starter = async (name: string) => {

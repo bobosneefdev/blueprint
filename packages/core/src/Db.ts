@@ -1,4 +1,4 @@
-// SQLite store (bun:sqlite + Drizzle). One file under %LOCALAPPDATA%\better-rust.
+// SQLite store (bun:sqlite + Drizzle). One file under %LOCALAPPDATA%\blueprint.
 // Plugin definitions live in the git workspace, not here; this holds runtime data only.
 import { Database } from "bun:sqlite";
 import { and, eq, gte, lt } from "drizzle-orm";

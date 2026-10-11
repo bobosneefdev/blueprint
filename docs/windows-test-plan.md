@@ -14,17 +14,17 @@ window + in-game pairing), §4 (live agent in chat, needs your harness credentia
 ```powershell
 bun install
 cd apps/portal; bun run build; cd ../..
-cd apps/bot; bun run build; cd ../..          # dist/better-rust-bot.exe
+cd apps/bot; bun run build; cd ../..          # dist/blueprint-bot.exe
 cd packages/cli; bun run build; cd ../..      # dist/bot (linux musl, for the sandbox)
 ```
 
 Sandbox image (needs Docker, or use the release artifact):
-`docker build -t better-rust-agent packages/installer/rootfs` then
-`docker export (docker create better-rust-agent) | gzip > better-rust-agent.tar.gz`.
+`docker build -t blueprint-agent packages/installer/rootfs` then
+`docker export (docker create blueprint-agent) | gzip > blueprint-agent.tar.gz`.
 
 ## 1. Sidecar alone
 
-- `$env:CLOUDFLARED="<path>\cloudflared.exe"; .\apps\bot\dist\better-rust-bot.exe`
+- `$env:CLOUDFLARED="<path>\cloudflared.exe"; .\apps\bot\dist\blueprint-bot.exe`
 - Expect: `portal: https://….trycloudflare.com` in the console and a team-chat line once a server
   is paired.
 - `http://127.0.0.1:47614` → redirects to `/pair` on first run.
@@ -32,17 +32,17 @@ Sandbox image (needs Docker, or use the release artifact):
 ## 2. Rust+ sign-in and pairing (spike 1 already passed this on the user's PC)
 
 - `/pair` → Sign in with Steam → Edge opens Facepunch's page with their warning → sign in.
-- Expect: "Signed in"; `%LOCALAPPDATA%\better-rust\config.json` has `rustplus`.
+- Expect: "Signed in"; `%LOCALAPPDATA%\blueprint\config.json` has `rustplus`.
 - In game: ESC → Rust+ → Pair with Server → server appears on `/` within ~10s.
 - Pair a smart switch named "Lights" → `workspace\servers\<id>\bindings.json` binds `lights`;
   enable night-lights on `/plugins`.
 
 ## 3. Sandbox
 
-- Copy `better-rust-agent.tar.gz` to `%LOCALAPPDATA%\better-rust\`.
+- Copy `blueprint-agent.tar.gz` to `%LOCALAPPDATA%\blueprint\`.
 - `/harness` → paste a Claude token (`claude setup-token`) or API key → "Saved to the sandbox".
-- `wsl -l -v` shows `better-rust-agent` (version 2).
-- Escape checks, inside `wsl -d better-rust-agent -u agent`:
+- `wsl -l -v` shows `blueprint-agent` (version 2).
+- Escape checks, inside `wsl -d blueprint-agent -u agent`:
   - `ls /mnt` shows no drives.
   - `ls /workspace/..` shows the distro root, not the Windows data dir (only agent-share is mounted).
   - `curl -m5 https://example.com` → fails; `curl -m5 https://api.anthropic.com` → connects.
@@ -52,16 +52,16 @@ Sandbox image (needs Docker, or use the release artifact):
 ## 4. Agent loop in game
 
 - Team chat: `@bot how many rockets for a sheet metal door?` → "on it…" then "2".
-- `@bot ping us when cargo spawns with the grid` → proposal line → `@bot yes` → "cargo-alert is live"
+- `@bot ping us when cargo spawns with the grid` → proposal line → `@bot yes <code>` → "cargo-alert is live"
   (or the starter already covers it; try "tell us when a teammate respawns").
-- A non-allowlisted teammate's `@bot …` is ignored; their `@bot yes` does not activate anything.
+- A non-allowlisted teammate's `@bot …` is ignored; their `@bot yes <code>` does not activate anything.
 - `@bot undo` reverts the last plugin change.
 
 ## 5. Tray + installer
 
-- `cd apps/desktop; bunx tauri build` (sidecar exe copied to `src-tauri/binaries/better-rust-bot-x86_64-pc-windows-msvc.exe`).
+- `cd apps/desktop; bunx tauri build` (sidecar exe copied to `src-tauri/binaries/blueprint-bot-x86_64-pc-windows-msvc.exe`).
 - Install the NSIS setup → tray icon → Open portal works; Quit stops the sidecar (no orphan
-  `better-rust-bot.exe` in Task Manager); relaunching shows one instance.
+  `blueprint-bot.exe` in Task Manager); relaunching shows one instance.
 - `install.ps1` end to end against a published release.
 
 ## 6. Notifications

@@ -42,9 +42,9 @@ export const send = async (
   text: string,
   channel: "toast" | "phone" | "both",
 ) => {
-  if (channel !== "phone") toast("better-rust", text);
+  if (channel !== "phone") toast("blueprint", text);
 
-  if (channel !== "toast" && ntfyTopic !== undefined) await phone(ntfyTopic, "better-rust", text);
+  if (channel !== "toast" && ntfyTopic !== undefined) await phone(ntfyTopic, "blueprint", text);
 };
 
 export { toastScript };

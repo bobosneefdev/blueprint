@@ -9,7 +9,7 @@
 // never visible to the agent. See Workspace.ts for how files move between the two.
 import { join } from "node:path";
 
-export const DISTRO = "better-rust-agent";
+export const DISTRO = "blueprint-agent";
 
 const wsl = (...args: string[]) => {
   const r = Bun.spawnSync(["wsl.exe", ...args], { stdout: "pipe", stderr: "pipe" });
@@ -30,7 +30,7 @@ export const ensure = (home: string) => {
     "--import",
     DISTRO,
     join(home, "wsl"),
-    join(home, "better-rust-agent.tar.gz"),
+    join(home, "blueprint-agent.tar.gz"),
     "--version",
     "2",
   );

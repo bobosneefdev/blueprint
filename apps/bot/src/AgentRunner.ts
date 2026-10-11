@@ -1,6 +1,6 @@
 // Runs one agent turn for a team chat request: ack, harness run (inside WSL on Windows),
 // short reply in chat, full reply kept for the portal.
-import { Agent, Harness } from "@better-rust/core";
+import { Agent, Harness } from "@blueprint/core";
 import { randomUUID } from "node:crypto";
 import * as HarnessAuth from "./HarnessAuth.ts";
 import * as Sandbox from "./Sandbox.ts";

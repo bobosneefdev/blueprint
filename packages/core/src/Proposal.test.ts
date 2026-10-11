@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Validate } from "@better-rust/dsl";
+import { Validate } from "@blueprint/dsl";
 import { fileURLToPath } from "node:url";
 import { confirm, effects, prompt, TTL_MS } from "./Proposal.ts";
 

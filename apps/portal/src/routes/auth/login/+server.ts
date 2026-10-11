@@ -1,5 +1,5 @@
 import { redirect } from "@sveltejs/kit";
-import { SteamAuth } from "@better-rust/core";
+import { SteamAuth } from "@blueprint/core";
 import { authOrigin } from "#lib/server/origin.ts";
 
 // Quick-tunnel URLs change every start, so realm/return_to come from the current origin.

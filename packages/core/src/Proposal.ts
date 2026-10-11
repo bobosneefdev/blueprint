@@ -4,7 +4,7 @@
 // itself (what the plugin does to the world, whether it replaces something) plus a portal link
 // to the full JSON. A per-proposal code means a stale or spoofed "[bot] reply yes" can't confirm
 // a different plugin, and a proposal expires after a few minutes.
-import { Action, type Plugin } from "@better-rust/dsl";
+import { Action, type Plugin } from "@blueprint/dsl";
 
 export const TTL_MS = 10 * 60_000;
 

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { fileURLToPath } from "node:url";
-import { Validate } from "@better-rust/dsl";
+import { Validate } from "@blueprint/dsl";
 import { Effect, Ref } from "effect";
 import protobuf from "protobufjs";
 import * as Db from "./Db.ts";

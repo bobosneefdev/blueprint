@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Validate } from "@better-rust/dsl";
+import { Validate } from "@blueprint/dsl";
 import { handler, parseDuration } from "./Rpc.ts";
 
 const plugin = await Bun.file(new URL("../../dsl/starter/pop.json", import.meta.url)).json();

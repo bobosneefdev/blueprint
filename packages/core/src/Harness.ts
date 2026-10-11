@@ -1,7 +1,7 @@
 // Drives Claude Code, Codex or Pi headless, one turn per call, resuming a per-requester session.
 // All three run with permission prompts bypassed: the WSL distro is the security boundary.
 //
-// On Windows the argv is prefixed with `wsl.exe -d better-rust-agent -u agent --cd /workspace --`.
+// On Windows the argv is prefixed with `wsl.exe -d blueprint-agent -u agent --cd /workspace --`.
 // Tests and Linux dev run the harness directly.
 import { Option, Predicate, Schema } from "effect";
 

@@ -4,7 +4,7 @@
 //
 // Raw Chrome DevTools Protocol instead of playwright: playwright-core cannot be bundled by
 // `bun build --compile`, and we only need two calls (addBinding + addScriptToEvaluateOnNewDocument).
-import { Pairing } from "@better-rust/core";
+import { Pairing } from "@blueprint/core";
 import { Schema } from "effect";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -66,7 +66,7 @@ export const signIn = async (): Promise<{
   readonly authToken: string;
 }> => {
   const port = 9300 + Math.floor(Math.random() * 500);
-  const profile = mkdtempSync(join(tmpdir(), "better-rust-login-"));
+  const profile = mkdtempSync(join(tmpdir(), "blueprint-login-"));
 
   const browser = Bun.spawn(
     [

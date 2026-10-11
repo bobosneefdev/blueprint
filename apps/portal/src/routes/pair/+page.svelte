@@ -28,7 +28,7 @@
   {:else}
     <p class="text-base-content/70">
       A browser window opens on Facepunch's Rust+ sign-in page. Read their notice and continue
-      with Steam there. better-rust never sees your Steam password.
+      with Steam there. Blueprint never sees your Steam password.
     </p>
     <form
       method="POST"

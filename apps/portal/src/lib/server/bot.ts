@@ -1,6 +1,6 @@
 // The portal runs inside the bot process. The bot entry calls `attach` at startup; routes read
 // live state through `bot()`. Keeping it one narrow interface keeps the portal testable.
-import type { Plugin, World } from "@better-rust/dsl";
+import type { Plugin, World } from "@blueprint/dsl";
 
 export interface PluginRow {
   readonly plugin: Plugin;
@@ -67,15 +67,15 @@ export interface Settings {
 // The portal is bundled separately from the bot, so module state is not shared; a global is the
 // one slot both bundles can see.
 declare global {
-  var __betterRustBot: Bot | undefined;
+  var __blueprintBot: Bot | undefined;
 }
 
 export const attach = (b: Bot) => {
-  globalThis.__betterRustBot = b;
+  globalThis.__blueprintBot = b;
 };
 
 export const bot = (): Bot => {
-  const current = globalThis.__betterRustBot;
+  const current = globalThis.__blueprintBot;
 
   if (current === undefined) throw new Error("portal started without a bot attached");
 

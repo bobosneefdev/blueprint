@@ -4,7 +4,7 @@
 //   servers/<id>/bindings.json  entity ids per server (reset on wipe)
 //   enabled.json                { "<name>": true|false }
 // Every activation/toggle/rollback is a commit, so history and undo come from git.
-import { Validate, type Plugin } from "@better-rust/dsl";
+import { Validate, type Plugin } from "@blueprint/dsl";
 import { mkdirSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -21,8 +21,8 @@ const HARDEN = [
 ];
 
 const git = (dir: string, ...args: string[]) => {
-  // Packaged builds ship MinGit (many gamers have no git); BETTER_RUST_GIT points at it.
-  const r = Bun.spawnSync([process.env.BETTER_RUST_GIT ?? "git", ...HARDEN, "-C", dir, ...args], {
+  // Packaged builds ship MinGit (many gamers have no git); BLUEPRINT_GIT points at it.
+  const r = Bun.spawnSync([process.env.BLUEPRINT_GIT ?? "git", ...HARDEN, "-C", dir, ...args], {
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -40,8 +40,8 @@ export const init = async (dir: string, starters: ReadonlyArray<Plugin> = []) =>
   if (readdirSync(dir).includes(".git")) return;
 
   git(dir, "init", "-q", "-b", "main");
-  git(dir, "config", "user.name", "better-rust");
-  git(dir, "config", "user.email", "bot@better-rust.local");
+  git(dir, "config", "user.name", "blueprint");
+  git(dir, "config", "user.email", "bot@blueprint.local");
 
   // Plugins needing a smart device start disabled; the rest work out of the box.
   const enabled = Object.fromEntries(starters.map((p) => [p.name, p.bindings.length === 0]));

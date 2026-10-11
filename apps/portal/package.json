@@ -1,5 +1,5 @@
 {
-  "name": "@better-rust/portal",
+  "name": "@blueprint/portal",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -17,8 +17,8 @@
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "@better-rust/core": "workspace:*",
-    "@better-rust/dsl": "workspace:*",
+    "@blueprint/core": "workspace:*",
+    "@blueprint/dsl": "workspace:*",
     "effect": "4.0.2",
     "three": "0.186.1"
   },

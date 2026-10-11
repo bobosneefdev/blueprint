@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "better-rust",
+  "productName": "Blueprint",
   "version": "0.1.0",
-  "identifier": "dev.betterrust.app",
+  "identifier": "dev.bobosneef.blueprint",
   "build": {
     "frontendDist": "../dist"
   },
@@ -15,7 +15,7 @@
   "bundle": {
     "active": true,
     "targets": ["nsis"],
-    "externalBin": ["binaries/better-rust-bot"],
+    "externalBin": ["binaries/blueprint-bot"],
     "resources": {
       "../../portal/build/": "portal/",
       "mingit/": "mingit/"
@@ -37,7 +37,7 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://github.com/bobosneefdev/better-rust/releases/latest/download/latest.json"
+        "https://github.com/bobosneefdev/blueprint/releases/latest/download/latest.json"
       ],
       "pubkey": "REPLACE_WITH_TAURI_SIGNER_PUBLIC_KEY",
       "windows": {

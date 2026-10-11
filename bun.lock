@@ -15,27 +15,27 @@
       },
     },
     "apps/bot": {
-      "name": "@better-rust/bot",
+      "name": "@blueprint/bot",
       "dependencies": {
-        "@better-rust/core": "workspace:*",
-        "@better-rust/dsl": "workspace:*",
-        "@better-rust/portal": "workspace:*",
+        "@blueprint/core": "workspace:*",
+        "@blueprint/dsl": "workspace:*",
+        "@blueprint/portal": "workspace:*",
         "effect": "4.0.2",
       },
     },
     "apps/desktop": {
-      "name": "@better-rust/desktop",
+      "name": "@blueprint/desktop",
       "version": "0.1.0",
       "devDependencies": {
         "@tauri-apps/cli": "2.12.1",
       },
     },
     "apps/portal": {
-      "name": "@better-rust/portal",
+      "name": "@blueprint/portal",
       "version": "0.0.1",
       "dependencies": {
-        "@better-rust/core": "workspace:*",
-        "@better-rust/dsl": "workspace:*",
+        "@blueprint/core": "workspace:*",
+        "@blueprint/dsl": "workspace:*",
         "effect": "4.0.2",
         "three": "0.186.1",
       },
@@ -57,10 +57,10 @@
       },
     },
     "apps/site": {
-      "name": "@better-rust/site",
+      "name": "@blueprint/site",
       "version": "0.0.1",
       "dependencies": {
-        "@better-rust/dsl": "workspace:*",
+        "@blueprint/dsl": "workspace:*",
       },
       "devDependencies": {
         "@sveltejs/adapter-static": "^4.0.0",
@@ -76,17 +76,20 @@
       },
     },
     "packages/cli": {
-      "name": "@better-rust/cli",
+      "name": "@blueprint/cli",
+      "bin": {
+        "bot": "./src/main.ts",
+      },
       "dependencies": {
-        "@better-rust/dsl": "workspace:*",
+        "@blueprint/dsl": "workspace:*",
         "@effect/platform-bun": "4.0.2",
         "effect": "4.0.2",
       },
     },
     "packages/core": {
-      "name": "@better-rust/core",
+      "name": "@blueprint/core",
       "dependencies": {
-        "@better-rust/dsl": "workspace:*",
+        "@blueprint/dsl": "workspace:*",
         "@effect/platform-bun": "4.0.2",
         "@liamcottle/push-receiver": "0.0.3",
         "drizzle-orm": "0.45.4",
@@ -95,37 +98,37 @@
       },
     },
     "packages/dsl": {
-      "name": "@better-rust/dsl",
+      "name": "@blueprint/dsl",
       "dependencies": {
         "@marcbachmann/cel-js": "8.0.0",
         "effect": "4.0.2",
       },
     },
     "packages/gallery-template": {
-      "name": "@better-rust/gallery-template",
+      "name": "@blueprint/gallery-template",
     },
     "packages/installer": {
-      "name": "@better-rust/installer",
+      "name": "@blueprint/installer",
     },
   },
   "packages": {
-    "@better-rust/bot": ["@better-rust/bot@workspace:apps/bot"],
+    "@blueprint/bot": ["@blueprint/bot@workspace:apps/bot"],
 
-    "@better-rust/cli": ["@better-rust/cli@workspace:packages/cli"],
+    "@blueprint/cli": ["@blueprint/cli@workspace:packages/cli"],
 
-    "@better-rust/core": ["@better-rust/core@workspace:packages/core"],
+    "@blueprint/core": ["@blueprint/core@workspace:packages/core"],
 
-    "@better-rust/desktop": ["@better-rust/desktop@workspace:apps/desktop"],
+    "@blueprint/desktop": ["@blueprint/desktop@workspace:apps/desktop"],
 
-    "@better-rust/dsl": ["@better-rust/dsl@workspace:packages/dsl"],
+    "@blueprint/dsl": ["@blueprint/dsl@workspace:packages/dsl"],
 
-    "@better-rust/gallery-template": ["@better-rust/gallery-template@workspace:packages/gallery-template"],
+    "@blueprint/gallery-template": ["@blueprint/gallery-template@workspace:packages/gallery-template"],
 
-    "@better-rust/installer": ["@better-rust/installer@workspace:packages/installer"],
+    "@blueprint/installer": ["@blueprint/installer@workspace:packages/installer"],
 
-    "@better-rust/portal": ["@better-rust/portal@workspace:apps/portal"],
+    "@blueprint/portal": ["@blueprint/portal@workspace:apps/portal"],
 
-    "@better-rust/site": ["@better-rust/site@workspace:apps/site"],
+    "@blueprint/site": ["@blueprint/site@workspace:apps/site"],
 
     "@dimforge/rapier3d-compat": ["@dimforge/rapier3d-compat@0.12.0", "", {}, "sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow=="],
 
@@ -733,9 +736,9 @@
 
     "zimmerframe": ["zimmerframe@1.1.5", "", {}, "sha512-msJxIvYDYcoNL+PJsu+7qmpDWsYmAxTY+2TNYXXF0hzBzBk0BMecOqDOG/EckUoKCuKwObfbugIl8QpqHDXeFA=="],
 
-    "@better-rust/portal/typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
+    "@blueprint/portal/typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
 
-    "@better-rust/site/typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
+    "@blueprint/site/typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
 
     "@liamcottle/push-receiver/protobufjs": ["protobufjs@6.11.6", "", { "dependencies": { "@protobufjs/aspromise": "^1.1.2", "@protobufjs/base64": "^1.1.2", "@protobufjs/codegen": "^2.0.4", "@protobufjs/eventemitter": "^1.1.0", "@protobufjs/fetch": "^1.1.0", "@protobufjs/float": "^1.0.2", "@protobufjs/inquire": "^1.1.0", "@protobufjs/path": "^1.1.2", "@protobufjs/pool": "^1.1.0", "@protobufjs/utf8": "^1.1.0", "@types/long": "^4.0.1", "@types/node": ">=13.7.0", "long": "^4.0.0" }, "bin": { "pbjs": "bin/pbjs", "pbts": "bin/pbts" } }, "sha512-k8BHqgPBOtrlougZZqF2uUk5Z7bN8f0wj+3e8M3hvtSv0NBAz4VBy5f6R5Nxq/l+i7mRFTgNZb2trxqTpHNY/A=="],
 

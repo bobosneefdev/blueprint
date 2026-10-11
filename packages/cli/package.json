@@ -1,5 +1,5 @@
 {
-  "name": "@better-rust/cli",
+  "name": "@blueprint/cli",
   "private": true,
   "bin": {
     "bot": "./src/main.ts"
@@ -12,7 +12,7 @@
     "build": "bun build --compile --target=bun-linux-x64-musl src/main.ts --outfile dist/bot"
   },
   "dependencies": {
-    "@better-rust/dsl": "workspace:*",
+    "@blueprint/dsl": "workspace:*",
     "@effect/platform-bun": "4.0.2",
     "effect": "4.0.2"
   }

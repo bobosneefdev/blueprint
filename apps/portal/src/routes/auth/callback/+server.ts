@@ -1,5 +1,5 @@
 import { error, redirect } from "@sveltejs/kit";
-import { SteamAuth } from "@better-rust/core";
+import { SteamAuth } from "@blueprint/core";
 import { bot } from "#lib/server/bot.ts";
 import { authOrigin, isLocal } from "#lib/server/origin.ts";
 import * as Session from "#lib/server/session.ts";

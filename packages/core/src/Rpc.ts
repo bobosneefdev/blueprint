@@ -1,6 +1,6 @@
 // HTTP API the sandboxed `bot` CLI talks to. Bound to the WSL-facing interface only, bearer-token
 // authenticated with a per-job token that also identifies who asked. Everything is JSON.
-import { Validate, type World } from "@better-rust/dsl";
+import { Validate, type World } from "@blueprint/dsl";
 import { Option, Schema } from "effect";
 import * as Replay from "./Replay.ts";
 

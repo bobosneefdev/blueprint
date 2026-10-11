@@ -1,5 +1,5 @@
 {
-  "name": "@better-rust/dsl",
+  "name": "@blueprint/dsl",
   "private": true,
   "type": "module",
   "exports": "./src/index.ts",

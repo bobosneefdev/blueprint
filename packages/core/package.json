@@ -1,5 +1,5 @@
 {
-  "name": "@better-rust/core",
+  "name": "@blueprint/core",
   "private": true,
   "type": "module",
   "exports": "./src/index.ts",
@@ -8,7 +8,7 @@
     "test": "bun test --pass-with-no-tests"
   },
   "dependencies": {
-    "@better-rust/dsl": "workspace:*",
+    "@blueprint/dsl": "workspace:*",
     "@effect/platform-bun": "4.0.2",
     "@liamcottle/push-receiver": "0.0.3",
     "drizzle-orm": "0.45.4",

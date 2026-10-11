@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
-import { Validate } from "@better-rust/dsl";
-import type { Plugin } from "@better-rust/dsl";
-import { Engine } from "@better-rust/dsl";
+import { Validate } from "@blueprint/dsl";
+import type { Plugin } from "@blueprint/dsl";
+import { Engine } from "@blueprint/dsl";
 import { initialState, Input, parseCommand, step } from "./Runtime.ts";
 
 const starter = async (name: string): Promise<Plugin> => {

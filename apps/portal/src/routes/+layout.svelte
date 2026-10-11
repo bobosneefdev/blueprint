@@ -16,7 +16,7 @@
 
 <svelte:head>
   <link rel="icon" href={favicon} />
-  <title>better-rust</title>
+  <title>Blueprint</title>
 </svelte:head>
 
 {#if page.url.pathname.startsWith("/auth") || page.url.pathname === "/pair" || page.url.pathname === "/harness"}
@@ -24,7 +24,7 @@
 {:else}
   <nav class="navbar bg-base-200 px-4">
     <div class="navbar-start gap-2">
-      <span class="text-lg font-bold">better-rust</span>
+      <span class="text-lg font-bold">Blueprint</span>
     </div>
     <div class="navbar-center">
       <ul class="menu menu-horizontal">

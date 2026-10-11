@@ -1,6 +1,6 @@
 // `bot dry-run`: feed recorded worlds/events through the runtime for one plugin and report what
 // would have fired. Same Runtime.step as live, so results match production behaviour.
-import { Engine, type Plugin, World } from "@better-rust/dsl";
+import { Engine, type Plugin, World } from "@blueprint/dsl";
 import { Match, Schema } from "effect";
 import * as Runtime from "./Runtime.ts";
 import { Event } from "./Snapshot.ts";

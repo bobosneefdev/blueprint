@@ -1,6 +1,6 @@
-# Agent sandbox rootfs, exported as a tarball for `wsl --import better-rust-agent`.
-#   docker build -t better-rust-agent packages/installer/rootfs
-#   docker export $(docker create better-rust-agent) | gzip > better-rust-agent.tar.gz
+# Agent sandbox rootfs, exported as a tarball for `wsl --import blueprint-agent`.
+#   docker build -t blueprint-agent packages/installer/rootfs
+#   docker export $(docker create blueprint-agent) | gzip > blueprint-agent.tar.gz
 FROM alpine:3.24
 
 RUN apk add --no-cache bash git curl ca-certificates nodejs npm ripgrep jq iptables ip6tables \

@@ -1,17 +1,17 @@
 {
-  "name": "@better-rust/bot",
+  "name": "@blueprint/bot",
   "private": true,
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "bun test --pass-with-no-tests",
     "dev": "bun src/main.ts",
-    "build": "bun build --compile --target=bun-windows-x64 src/main.ts --outfile dist/better-rust-bot.exe"
+    "build": "bun build --compile --target=bun-windows-x64 src/main.ts --outfile dist/blueprint-bot.exe"
   },
   "dependencies": {
-    "@better-rust/core": "workspace:*",
-    "@better-rust/dsl": "workspace:*",
-    "@better-rust/portal": "workspace:*",
+    "@blueprint/core": "workspace:*",
+    "@blueprint/dsl": "workspace:*",
+    "@blueprint/portal": "workspace:*",
     "effect": "4.0.2"
   }
 }

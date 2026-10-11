@@ -1,4 +1,4 @@
-# better-rust — Spec (codename)
+# Blueprint — Spec
 
 LLM-authored Rust+ team bot. Players request features in team chat; an agent harness writes
 validated, tested plugins in a declarative DSL; the bot runs them.
@@ -6,7 +6,7 @@ validated, tested plugins in a declarative DSL; the bot runs them.
 ## Product
 
 - **Self-hosted, Windows only.** One-line install:
-  `powershell -ExecutionPolicy ByPass -c "irm https://<site>/install.ps1 | iex"`.
+  `powershell -ExecutionPolicy ByPass -c "irm https://blueprint.bobosneef.dev/install.ps1 | iex"`.
 - **Open source, AGPL-3.0, reputation first.** No telemetry, no payments. Only phone-home is the
   update check against GitHub Releases.
 - **Launch:** r/playrust + 60s demo video ("@bot alert me when cargo spawns" → alert fires).
@@ -35,7 +35,7 @@ validated, tested plugins in a declarative DSL; the bot runs them.
 
 - **Harnesses:** Claude Code, Codex, Pi — driven headless via their JSON stream modes, T3 Code
   style. All run with permission prompts bypassed; the sandbox is the boundary.
-- **Sandbox:** dedicated WSL2 distro `better-rust-agent` (`wsl --import` of a minimal rootfs).
+- **Sandbox:** dedicated WSL2 distro `blueprint-agent` (`wsl --import` of a minimal rootfs).
   `/etc/wsl.conf`: automount off, interop off. Non-root user. Sees only `/workspace` and read-only
   `/data/rust-items-json`. Network: LLM provider endpoints only.
 - **Auth:** portal "Harnesses" page runs `claude login` / `codex login` inside the distro and relays
@@ -109,7 +109,7 @@ Core + starter plugin pack (~10 reviewed), gallery (export/import), multi-server
 
 ## Gallery
 
-`better-rust-plugins` GitHub repo. PRs validated by CI against the DSL schema. Landing site builds
+`blueprint-plugins` GitHub repo. PRs validated by CI against the DSL schema. Landing site builds
 a browsable index at deploy. Portal imports from raw GitHub URLs.
 
 ## Distribution & updates
@@ -171,7 +171,7 @@ drvfs ignores `ro` for the agent, so game data is copied in rather than mounted.
 ## Native Windows verification (Windows 11 VM, 2026-10-10)
 
 All dsl/core/bot test suites pass natively under Bun on Windows (one POSIX-sh test skipped by
-design). The compiled `better-rust-bot.exe` boots: portal redirects to /pair, RPC rejects
+design). The compiled `blueprint-bot.exe` boots: portal redirects to /pair, RPC rejects
 unauthenticated calls, workspace is seeded via bundled MinGit. Fixed on the way: `URL.pathname`
 yields `/C:/...` on Windows (use `fileURLToPath`).
 
@@ -190,7 +190,3 @@ yields `/C:/...` on Windows (use `fileURLToPath`).
 - Agent egress is an IP allowlist; shared CDN IPs also reach co-tenant sites. Fix: SNI-checking
   CONNECT proxy (see egress-firewall).
 - The bot RPC on the WSL adapter is reachable by other WSL2 distros on the same PC (token-gated).
-
-## Open
-
-- Project name (codename `better-rust`).

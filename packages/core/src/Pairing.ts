@@ -64,7 +64,7 @@ export const registerPush = async (authToken: string, expoPushToken: string) => 
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       AuthToken: authToken,
-      DeviceId: "better-rust",
+      DeviceId: "blueprint",
       PushKind: 3,
       PushToken: expoPushToken,
     }),

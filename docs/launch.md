@@ -7,7 +7,7 @@
 | 0-4s   | In game, team chat open, base at night                                | "What if you could just ask your Rust+ bot for a feature?"               |
 | 4-12s  | Type `@bot ping us when cargo spawns, with the grid`                  | "Type it in team chat."                                                  |
 | 12-18s | `[bot] on it…` → proposal line                                        | "It writes the plugin and tests it on your server's recent data."        |
-| 18-22s | `@bot yes` → `cargo-alert is live`                                    | "You confirm."                                                           |
+| 18-22s | `@bot yes <code>` → `cargo-alert is live`                             | "You confirm."                                                           |
 | 22-30s | Cargo spawns → `[bot] Cargo Ship spawned at G3`, map overlay shows it | "Done."                                                                  |
 | 30-38s | `@bot how many rockets for a sheet metal door?` → `2`                 | "Ask it anything, using game data pulled from Rust's files every patch." |
 | 38-46s | `@bot tell us when enemies are near base` → honest answer + heuristic | "It tells you when Rust+ can't do something."                            |
@@ -34,4 +34,4 @@ Body (short, no hype):
 - [ ] Windows test plan passes on a clean machine
 - [ ] Release published by CI (checksums, attestation, VirusTotal link)
 - [ ] Gallery repo created and seeded
-- [ ] Project name decided (replace codename everywhere)
+- [x] Project name decided: Blueprint

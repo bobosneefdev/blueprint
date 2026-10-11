@@ -1,4 +1,4 @@
-// Install-local configuration under %LOCALAPPDATA%\better-rust (or $XDG_DATA_HOME on dev boxes).
+// Install-local configuration under %LOCALAPPDATA%\blueprint (or $XDG_DATA_HOME on dev boxes).
 // Secrets (Rust+ auth token, FCM credentials, session secret) live here, never in the workspace.
 import { Schema } from "effect";
 import { randomBytes } from "node:crypto";
@@ -7,10 +7,10 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 
 export const dataDir = () =>
-  process.env.BETTER_RUST_HOME ??
+  process.env.BLUEPRINT_HOME ??
   (process.platform === "win32"
-    ? join(process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local"), "better-rust")
-    : join(process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share"), "better-rust"));
+    ? join(process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local"), "blueprint")
+    : join(process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share"), "blueprint"));
 
 const Harness = Schema.Literals(["claude", "codex", "pi"]);
 

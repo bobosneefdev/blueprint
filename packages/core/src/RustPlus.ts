@@ -123,7 +123,7 @@ export interface Interface {
   readonly broadcasts: Stream.Stream<AppBroadcast>;
 }
 
-export class Service extends Context.Service<Service, Interface>()("@better-rust/RustPlus") {}
+export class Service extends Context.Service<Service, Interface>()("@blueprint/RustPlus") {}
 
 const protoPath = fileURLToPath(new URL("../proto/rustplus.proto", import.meta.url));
 

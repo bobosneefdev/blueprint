@@ -1,4 +1,4 @@
-import { Validate } from "@better-rust/dsl";
+import { Validate } from "@blueprint/dsl";
 
 // The gallery index is built from the starter plugins at build time (static site, no backend).
 // JSON imports are plain JSON; validate() is the decode boundary.

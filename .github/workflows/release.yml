@@ -24,12 +24,12 @@ jobs:
         run: cd packages/cli && bun run build && cp dist/bot ../installer/rootfs/bot
       - name: sandbox image
         run: |
-          docker build -t better-rust-agent packages/installer/rootfs
-          docker export "$(docker create better-rust-agent)" | gzip -9 > better-rust-agent.tar.gz
+          docker build -t blueprint-agent packages/installer/rootfs
+          docker export "$(docker create blueprint-agent)" | gzip -9 > blueprint-agent.tar.gz
       - uses: actions/upload-artifact@v4
         with:
           name: rootfs
-          path: better-rust-agent.tar.gz
+          path: blueprint-agent.tar.gz
 
   app:
     runs-on: windows-latest
@@ -53,7 +53,7 @@ jobs:
         run: |
           cd apps/bot && bun run build
           mkdir -p ../desktop/src-tauri/binaries
-          cp dist/better-rust-bot.exe ../desktop/src-tauri/binaries/better-rust-bot-x86_64-pc-windows-msvc.exe
+          cp dist/blueprint-bot.exe ../desktop/src-tauri/binaries/blueprint-bot-x86_64-pc-windows-msvc.exe
       - name: bundle MinGit (git for the plugin workspace; most players have none)
         shell: pwsh
         run: |
@@ -69,8 +69,8 @@ jobs:
         shell: bash
         run: |
           mkdir out
-          cp apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe out/better-rust-setup.exe
-          cp apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe.sig out/better-rust-setup.exe.sig
+          cp apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe out/blueprint-setup.exe
+          cp apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe.sig out/blueprint-setup.exe.sig
       - uses: actions/upload-artifact@v4
         with:
           name: app
@@ -88,17 +88,17 @@ jobs:
       - name: updater manifest
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/better-rust-setup.exe"
-          jq -n --arg v "$VERSION" --arg url "$URL" --rawfile sig dist/better-rust-setup.exe.sig \
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/blueprint-setup.exe"
+          jq -n --arg v "$VERSION" --arg url "$URL" --rawfile sig dist/blueprint-setup.exe.sig \
             '{version: $v, platforms: {"windows-x86_64": {url: $url, signature: $sig}}}' > dist/latest.json
           cp packages/installer/install.ps1 dist/install.ps1
       - name: checksums
-        run: cd dist && sha256sum better-rust-setup.exe better-rust-agent.tar.gz install.ps1 > SHA256SUMS
+        run: cd dist && sha256sum blueprint-setup.exe blueprint-agent.tar.gz install.ps1 > SHA256SUMS
       - uses: actions/attest-build-provenance@v2
         with:
           subject-path: |
-            dist/better-rust-setup.exe
-            dist/better-rust-agent.tar.gz
+            dist/blueprint-setup.exe
+            dist/blueprint-agent.tar.gz
             dist/install.ps1
       - name: VirusTotal
         id: vt
@@ -106,19 +106,19 @@ jobs:
           VT_API_KEY: ${{ secrets.VT_API_KEY }}
         run: |
           if [ -z "$VT_API_KEY" ]; then echo "report=(VirusTotal key not configured)" >> "$GITHUB_OUTPUT"; exit 0; fi
-          SHA=$(sha256sum dist/better-rust-setup.exe | cut -d' ' -f1)
+          SHA=$(sha256sum dist/blueprint-setup.exe | cut -d' ' -f1)
           UPLOAD=$(curl -s -H "x-apikey: $VT_API_KEY" https://www.virustotal.com/api/v3/files/upload_url | jq -r .data)
-          curl -s -H "x-apikey: $VT_API_KEY" -F "file=@dist/better-rust-setup.exe" "$UPLOAD" > /dev/null
+          curl -s -H "x-apikey: $VT_API_KEY" -F "file=@dist/blueprint-setup.exe" "$UPLOAD" > /dev/null
           echo "report=https://www.virustotal.com/gui/file/$SHA" >> "$GITHUB_OUTPUT"
       - name: release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           cat > notes.md <<EOF
-          Install: \`powershell -ExecutionPolicy ByPass -c "irm https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/install.ps1 | iex"\`
+          Install: \`powershell -ExecutionPolicy ByPass -c "irm https://blueprint.bobosneef.dev/install.ps1 | iex"\` (same file as install.ps1 below)
 
           - Built by this workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
-          - Verify: \`gh attestation verify better-rust-setup.exe -R ${GITHUB_REPOSITORY}\`
+          - Verify: \`gh attestation verify blueprint-setup.exe -R ${GITHUB_REPOSITORY}\`
           - VirusTotal: ${{ steps.vt.outputs.report }}
           - The installer is not code-signed yet; Windows SmartScreen will warn. Checksums are in SHA256SUMS.
           EOF
@@ -134,8 +134,8 @@ jobs:
         with:
           bun-version-file: package.json
       - run: bun install --frozen-lockfile
-      - run: cd apps/site && bun run build
-      - run: bunx wrangler pages deploy apps/site/build --project-name better-rust
+      - run: cd apps/site && bun run build && cp ../../packages/installer/install.ps1 build/install.ps1
+      - run: bunx wrangler pages deploy apps/site/build --project-name blueprint
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

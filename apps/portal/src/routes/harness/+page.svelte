@@ -10,7 +10,7 @@
 <div class="mx-auto flex max-w-xl flex-col gap-6 p-6 md:p-10">
   <h1 class="text-2xl font-bold">Connect your AI</h1>
   <p class="text-base-content/70">
-    Credentials go straight into the AI's sandbox on this PC. better-rust doesn't store or send them.
+    Credentials go straight into the AI's sandbox on this PC. Blueprint doesn't store or send them.
   </p>
 
   <form method="POST" use:enhance class="card bg-base-200">

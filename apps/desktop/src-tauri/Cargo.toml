@@ -1,12 +1,12 @@
 [package]
-name = "better-rust"
+name = "blueprint"
 version = "0.1.0"
 description = "AI-built Rust+ team bot"
 license = "AGPL-3.0-only"
 edition = "2024"
 
 [lib]
-name = "better_rust_lib"
+name = "blueprint_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

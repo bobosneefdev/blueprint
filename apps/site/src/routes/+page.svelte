@@ -3,7 +3,7 @@
 
   let { data }: PageProps = $props();
 
-  const install = `powershell -ExecutionPolicy ByPass -c "irm https://github.com/bobosneefdev/better-rust/releases/latest/download/install.ps1 | iex"`;
+  const install = `powershell -ExecutionPolicy ByPass -c "irm https://blueprint.bobosneef.dev/install.ps1 | iex"`;
 
   let copied = $state(false);
 
@@ -16,8 +16,9 @@
   const chat = [
     { who: "you", text: "@bot ping us when cargo spawns, with the grid" },
     { who: "bot", text: "on it…" },
-    { who: "bot", text: "cargo-alert: Cargo Ship spawned → chat with grid. Reply @bot yes to activate" },
-    { who: "you", text: "@bot yes" },
+    { who: "bot", text: "@bot yes 4821 to activate: <portal link>" },
+    { who: "bot", text: "new cargo-alert [chat]" },
+    { who: "you", text: "@bot yes 4821" },
     { who: "bot", text: "cargo-alert is live" },
     { who: "bot", text: "Cargo Ship spawned at G3" },
   ];
@@ -41,7 +42,7 @@
 </script>
 
 <svelte:head>
-  <title>better-rust: type a feature into Rust team chat</title>
+  <title>Blueprint: type a feature into Rust team chat</title>
   <meta
     name="description"
     content="A self-hosted Rust+ team bot you program by asking. Type what you want in team chat; an AI builds, tests and runs it."
@@ -56,7 +57,7 @@
         Type a feature into team chat. <span class="text-primary">It just exists.</span>
       </h1>
       <p class="text-base-content/75 max-w-prose text-lg">
-        better-rust is a Rust+ team bot you program by asking. An AI writes the plugin, tests it
+        Blueprint is a Rust+ team bot you program by asking. An AI writes the plugin, tests it
         against your server, and runs it once you confirm.
       </p>
       <div class="flex flex-col gap-2">
@@ -67,7 +68,7 @@
           </button>
         </div>
         <p class="text-base-content/60 text-sm">
-          Paste into PowerShell. <a class="link" href="https://github.com/bobosneefdev/better-rust/blob/main/packages/installer/install.ps1">Read the script first</a>, it's short.
+          Paste into PowerShell. <a class="link" href="https://github.com/bobosneefdev/blueprint/blob/main/packages/installer/install.ps1">Read the script first</a>, it's short.
         </p>
       </div>
     </div>
@@ -128,6 +129,6 @@
 
   <footer class="text-base-content/60 flex flex-col gap-2 text-sm md:flex-row md:justify-between">
     <span>AGPL-3.0 · Not affiliated with Facepunch Studios.</span>
-    <a class="link" href="https://github.com/bobosneefdev/better-rust">GitHub</a>
+    <a class="link" href="https://github.com/bobosneefdev/blueprint">GitHub</a>
   </footer>
 </main>

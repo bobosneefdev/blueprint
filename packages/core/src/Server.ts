@@ -1,7 +1,7 @@
 // One paired Rust server: polls Rust+ on a fixed cadence (one request per data source, shared by
 // every plugin), records frames, turns diffs + broadcasts into runtime inputs, and executes the
 // resulting effects. Lives for the scope; reconnect is the caller's retry policy.
-import { type Device, Engine, type World } from "@better-rust/dsl";
+import { type Device, Engine, type World } from "@blueprint/dsl";
 import { Effect, Ref, Schedule, Stream, SubscriptionRef } from "effect";
 import * as Db from "./Db.ts";
 import * as Runtime from "./Runtime.ts";

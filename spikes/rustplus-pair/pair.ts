@@ -88,7 +88,7 @@ async function pushRegister(authToken: string, expoPushToken: string) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       AuthToken: authToken,
-      DeviceId: "better-rust",
+      DeviceId: "blueprint",
       PushKind: 3,
       PushToken: expoPushToken,
     }),
@@ -118,7 +118,7 @@ function roundTrip(server: NonNullable<State["server"]>) {
     rp.getInfo((m: { response: unknown }) =>
       console.log("getInfo:", JSON.stringify(m.response).slice(0, 200)),
     );
-    rp.sendTeamMessage("[better-rust spike] hello. Reply in team chat to test receive.");
+    rp.sendTeamMessage("[blueprint spike] hello. Reply in team chat to test receive.");
   });
   rp.on(
     "message",

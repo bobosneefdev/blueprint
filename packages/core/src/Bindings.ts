@@ -1,7 +1,7 @@
 // Per-server device bindings: plugin binding name -> paired smart device.
 // Stored in the workspace at servers/<id>/bindings.json so they are versioned with plugins and
 // reset on wipe (entity ids change every wipe).
-import type { Plugin } from "@better-rust/dsl";
+import type { Plugin } from "@blueprint/dsl";
 import { Schema } from "effect";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";

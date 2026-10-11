@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { attach } from "./src/lib/server/bot.ts";
-import { Validate } from "@better-rust/dsl";
+import { Validate } from "@blueprint/dsl";
 
 attach({
   sessionSecret: "dev",
