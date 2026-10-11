@@ -15,12 +15,9 @@
 
 <div class="grid gap-4 md:grid-cols-2">
   {#each data.servers as s (s.id)}
-    <div class="card bg-base-200">
+    <a class="card bg-base-200" href="/servers/{s.id}">
       <div class="card-body">
-        <div class="flex items-center justify-between gap-2">
-          <h2 class="card-title">{s.name}</h2>
-          <a class="btn btn-sm" href="/map/{s.id}">Map</a>
-        </div>
+        <h2 class="card-title">{s.name}</h2>
         <div class="stats">
           <div class="stat">
             <div class="stat-title">Players</div>
@@ -38,6 +35,6 @@
           {/each}
         </ul>
       </div>
-    </div>
+    </a>
   {/each}
 </div>

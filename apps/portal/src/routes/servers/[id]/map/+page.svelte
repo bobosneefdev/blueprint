@@ -17,11 +17,11 @@
         // Browser-only: three/webgpu touches navigator/GPU globals at import time.
         const { mount, decodeSnapshot } = await import("#lib/map.ts");
         // Rust+ can be mid-reconnect; retry the image instead of failing the page.
-        let img = await fetch(`/map/${data.id}/image.jpg`);
+        let img = await fetch(`/servers/${data.id}/map/image.jpg`);
 
         while (!img.ok && !stop) {
           await new Promise((r) => setTimeout(r, 5000));
-          img = await fetch(`/map/${data.id}/image.jpg`);
+          img = await fetch(`/servers/${data.id}/map/image.jpg`);
         }
 
         if (stop) return;
@@ -36,7 +36,7 @@
         destroy = view.destroy;
 
         while (!stop) {
-          const res = await fetch(`/map/${data.id}/world.json`);
+          const res = await fetch(`/servers/${data.id}/map/world.json`);
 
           if (res.ok) view.update(decodeSnapshot(await res.text()));
 
@@ -54,13 +54,10 @@
   };
 </script>
 
-<div class="mb-4 flex flex-col gap-1">
-  <h1 class="text-2xl font-semibold">{data.name}</h1>
-  <p class="text-base-content/60 text-sm">
+<p class="text-base-content/60 text-sm">
     <span class="text-success">●</span> online · <span class="text-error">●</span> dead ·
     <span class="text-base-content/40">●</span> offline · larger dots are cargo, heli, chinook, crates
-  </p>
-</div>
+</p>
 
 {#if failed}
   <div role="alert" class="alert alert-error"><span>Map unavailable: {failed}</span></div>

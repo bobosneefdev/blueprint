@@ -1,34 +1,8 @@
 import { error, fail } from "@sveltejs/kit";
 import { bot } from "#lib/server/bot.ts";
 
-const SID64 = /^7656119\d{10}$/;
-
-/** Teammates per server (live team, plus anyone already given a role who isn't online in it). */
-const teams = () => {
-  const roles = bot().settings().roles;
-  const host = bot().hostSteamId();
-
-  return bot()
-    .servers()
-    .map((s) => {
-      const team = new Map((s.world?.team ?? []).map((m) => [m.steamId, m.name]));
-
-      for (const sid of Object.keys(roles[s.id] ?? {})) if (!team.has(sid)) team.set(sid, sid);
-
-      return {
-        id: s.id,
-        name: s.name,
-        connected: s.world !== undefined,
-        members: [...team].flatMap(([steamId, name]) =>
-          steamId === host ? [] : [{ steamId, name, role: roles[s.id]?.[steamId] ?? "none" }],
-        ),
-      };
-    });
-};
-
 export const load = ({ locals }) => ({
   settings: bot().settings(),
-  teams: teams(),
   isHost: locals.sid64 === bot().hostSteamId(),
   role: locals.role,
   local: locals.local,
@@ -43,27 +17,6 @@ export const actions = {
     const f = await request.formData();
     const botName = String(f.get("botName") ?? "").trim();
     const harness = String(f.get("harness") ?? "");
-
-    // Fields are "role:<serverId>:<sid64>" = none | interact | admin.
-    const roles: Record<string, Record<string, "interact" | "admin">> = {};
-
-    const serverIds = new Set(
-      bot()
-        .servers()
-        .map((s) => s.id),
-    );
-
-    for (const [k, v] of f) {
-      const m = /^role:([^:]+):(\d+)$/.exec(k);
-
-      if (!m?.[1] || !m[2]) continue;
-
-      if (!serverIds.has(m[1]) || !SID64.test(m[2]))
-        return fail(400, { error: "Unknown server or player in roles." });
-
-      if (v === "interact" || v === "admin") roles[m[1]] = { ...roles[m[1]], [m[2]]: v };
-      else if (v !== "none") return fail(400, { error: "Unknown role." });
-    }
 
     if (!/^[a-zA-Z][a-zA-Z0-9_.-]{0,15}$/.test(botName))
       return fail(400, { error: "Bot name: letters, numbers, . _ - (max 16)." });
@@ -98,7 +51,8 @@ export const actions = {
     await bot().saveSettings({
       botName,
       harness,
-      roles,
+      // Per-server roles live on each server's Config tab.
+      roles: bot().settings().roles,
       model,
       effort,
       fast: f.get("fast") === "on",

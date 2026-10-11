@@ -97,39 +97,6 @@
         {/if}
       {/await}
 
-      <div class="flex flex-col gap-2">
-        <h3 class="font-semibold">Team roles</h3>
-        <p class="text-base-content/70 text-sm">
-          Per server. <b>Interact</b>: ask @{data.settings.botName} and use plugin /commands.
-          <b>Admin</b>: also confirm new plugins and turn them on/off. You are admin everywhere.
-        </p>
-        {#each data.teams as t (t.id)}
-          <div class="bg-base-100 rounded-box p-4">
-            <p class="mb-2 font-medium">{t.name}</p>
-            {#if t.members.length === 0}
-              <p class="text-base-content/60 text-sm">
-                {t.connected ? "No teammates in game yet." : "Not connected yet; teammates show once the server is online."}
-              </p>
-            {:else}
-              <ul class="list">
-                {#each t.members as m (m.steamId)}
-                  <li class="list-row items-center">
-                    <span class="list-col-grow">{m.name}</span>
-                    <select class="select select-sm w-36" name="role:{t.id}:{m.steamId}" value={m.role} aria-label="Role for {m.name} on {t.name}">
-                      <option value="none">None</option>
-                      <option value="interact">Interact</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </li>
-                {/each}
-              </ul>
-            {/if}
-          </div>
-        {:else}
-          <p class="text-base-content/60 text-sm">Pair a server first.</p>
-        {/each}
-      </div>
-
       <label class="flex flex-col gap-1">
         <span class="label">ntfy.sh topic for phone alerts (optional)</span>
         <input class="input font-mono" name="ntfyTopic" value={data.settings.ntfyTopic ?? ""} placeholder="a long random string" />

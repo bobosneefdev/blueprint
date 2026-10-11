@@ -33,7 +33,7 @@
       </a>
       <ul class="menu menu-horizontal flex-1 p-0">
         {#each links as l (l.href)}
-          <li><a href={l.href} class={{ "menu-active": page.url.pathname === l.href }}>{l.label}</a></li>
+          <li><a href={l.href} class={{ "menu-active": page.url.pathname === l.href || (l.href === "/" && page.url.pathname.startsWith("/servers/")) }}>{l.label}</a></li>
         {/each}
       </ul>
       <form method="POST" action="/auth/logout"><button class="btn btn-ghost btn-sm">Sign out</button></form>

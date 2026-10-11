@@ -8,6 +8,5 @@ export const load = ({ params }) => {
 
   if (s === undefined) error(404);
 
-  // The map image is fetched by the browser (image.jpg); never block or fail the page on Rust+.
   return { id: s.id, name: s.name };
 };
