@@ -19,7 +19,8 @@
     CLOUDFLARE_API_TOKEN=paste VT_API_KEY=paste bash scripts/release-setup.sh
    ```
 
-It generates the Tauri updater key into `~/.tauri/blueprint.key` and back that file up.
+It generates the Tauri updater key into `~/.tauri/blueprint.key` (password in
+`~/.tauri/blueprint.key.password`). Back up both files.
 **Losing it means existing installs can never auto-update again.** It also:
 
 - writes the public key into `tauri.conf.json`;

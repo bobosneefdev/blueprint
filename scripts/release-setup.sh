@@ -16,11 +16,11 @@ cf() { curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Ty
 echo "1/4 Tauri updater key"
 if [ ! -f "$KEY" ]; then
   mkdir -p "$(dirname "$KEY")"
-  PASS=$(openssl rand -base64 24)
-  (cd apps/desktop && bunx tauri signer generate --ci -p "$PASS" -w "$KEY" >/dev/null)
-  printf '%s' "$PASS" | gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD -R "$REPO"
+  (umask 077 && openssl rand -base64 24 | tr -d '\n' > "$KEY.password")
+  (cd apps/desktop && bunx tauri signer generate --ci -p "$(cat "$KEY.password")" -w "$KEY" >/dev/null)
+  gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD -R "$REPO" < "$KEY.password"
   gh secret set TAURI_SIGNING_PRIVATE_KEY -R "$REPO" < "$KEY"
-  echo "   private key saved to $KEY (back it up: losing it means users can't auto-update)"
+  echo "   back up $KEY and $KEY.password: losing them means users can't auto-update"
 fi
 jq --arg k "$(cat "$KEY.pub")" '.plugins.updater.pubkey = $k' apps/desktop/src-tauri/tauri.conf.json \
   > /tmp/tauri.conf.json && mv /tmp/tauri.conf.json apps/desktop/src-tauri/tauri.conf.json
