@@ -142,7 +142,7 @@ jobs:
           bun-version-file: package.json
       - run: bun install --frozen-lockfile
       - run: cd apps/site && bun run build && cp ../../packages/installer/install.ps1 build/install.ps1
-      - run: bunx wrangler pages deploy apps/site/build --project-name blueprint
+      - run: bunx wrangler pages deploy apps/site/build --project-name blueprint --branch main
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

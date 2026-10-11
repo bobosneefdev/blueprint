@@ -7,6 +7,7 @@ RUN apk add --no-cache bash git curl ca-certificates nodejs npm ripgrep jq iptab
       bind-tools libstdc++ libgcc \
  && npm install -g --no-fund --no-audit \
       @anthropic-ai/claude-code @openai/codex @earendil-works/pi-coding-agent \
+ && rm -rf /root/.npm /tmp/* \
  && adduser -D -s /bin/bash agent \
  && mkdir -p /workspace /data/rust-items-json \
  && chown agent:agent /workspace
