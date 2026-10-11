@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "dev.bobosneef.blueprint",
   "build": {
-    "frontendDist": "../dist"
+    "frontendDist": "../shell"
   },
   "app": {
     "windows": [],
