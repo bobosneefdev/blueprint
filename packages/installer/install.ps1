@@ -92,4 +92,4 @@ for ($i = 0; $i -lt 30; $i++) {
 }
 Start-Process $portal
 
-Say "Done. Blueprint is in your tray, and the portal is open in your browser: sign in with Steam on the Pair page."
+Say "Done. Blueprint is in your tray, and the portal is open in your browser: follow the setup steps there."

@@ -38,6 +38,16 @@ export interface Bot {
   readonly settings: () => Settings;
   /** Host PC only: stores a harness credential inside the sandbox. */
   readonly saveHarnessCredential: (c: HarnessCredential) => Promise<void>;
+  /**
+   * Installed version, approved-range state, sign-in and live models, per harness; or why the
+   * sandbox couldn't be reached. Never rejects, so pages can stream it.
+   */
+  readonly harnesses: () => Promise<ReadonlyArray<HarnessStatus> | string>;
+  /** Installs the approved version (also up/downgrades). */
+  readonly installHarness: (kind: HarnessKind) => Promise<void>;
+  readonly startHarnessLogin: (kind: "claude" | "codex") => Promise<void>;
+  readonly harnessLogin: () => HarnessLogin | undefined;
+  readonly answerHarnessLogin: (code: string) => void;
   /** Most recent first. */
   readonly activity: () => ReadonlyArray<{
     readonly at: number;
@@ -51,6 +61,38 @@ export interface Bot {
   readonly importPlugin: (url: string, by: string) => Promise<ReadonlyArray<string>>;
 }
 
+export type HarnessKind = "claude" | "codex" | "pi";
+
+export interface HarnessModel {
+  readonly id: string;
+  readonly label: string;
+  readonly efforts: ReadonlyArray<string>;
+  readonly defaultEffort: string | undefined;
+  readonly fast: boolean;
+  readonly isDefault: boolean;
+}
+
+export interface HarnessStatus {
+  readonly kind: HarnessKind;
+  readonly version: string | undefined;
+  readonly approved: {
+    readonly package: string;
+    readonly min: string;
+    readonly pin: string;
+  };
+  readonly state: "missing" | "outdated" | "ahead" | "ok";
+  readonly signedIn: boolean;
+  readonly models: ReadonlyArray<HarnessModel>;
+}
+
+export interface HarnessLogin {
+  readonly kind: HarnessKind;
+  readonly url: string | undefined;
+  readonly code: string | undefined;
+  readonly state: "starting" | "waiting" | "done" | "failed";
+  readonly message: string | undefined;
+}
+
 export type HarnessCredential =
   | { readonly harness: "claude"; readonly kind: "oauthToken" | "apiKey"; readonly value: string }
   | { readonly harness: "codex"; readonly kind: "apiKey"; readonly value: string }
@@ -59,8 +101,10 @@ export type HarnessCredential =
 export interface Settings {
   readonly botName: string;
   readonly allowlist: ReadonlyArray<string>;
-  readonly harness: "claude" | "codex" | "pi";
+  readonly harness: HarnessKind;
   readonly model: string | undefined;
+  readonly effort: string | undefined;
+  readonly fast: boolean;
   readonly ntfyTopic: string | undefined;
 }
 

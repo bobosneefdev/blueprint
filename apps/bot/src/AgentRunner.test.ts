@@ -26,7 +26,12 @@ const harness = (deps: { run: Run }) => {
       allowlist: ["2"],
       portalUrl: "https://p.example",
     }),
-    harness: () => ({ kind: "claude", model: undefined }),
+    harness: () => ({
+      kind: "claude",
+      model: undefined,
+      effort: undefined,
+      fast: false,
+    }),
     chat: async (l) => void chat.push(l),
     sessions,
     replies: new Map(),

@@ -1,14 +1,29 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
+  import type { HarnessModel } from "#lib/server/bot.ts";
   import type { PageProps } from "./$types";
 
   let { data, form }: PageProps = $props();
 
-  // Writable derived: follows saved settings, editable locally.
+  const NAMES = { claude: "Claude Code", codex: "Codex", pi: "Pi" } as const;
+
+  // Writable deriveds: follow saved settings, editable locally.
+  let harness = $derived(data.settings.harness);
+
   let model = $derived(data.settings.model ?? "");
+
+  let effort = $derived(data.settings.effort ?? "");
+
+  let fast = $derived(data.settings.fast);
+
+  const modelsFor = (list: ReadonlyArray<{ kind: string; models: ReadonlyArray<HarnessModel> }>) =>
+    list.find((h) => h.kind === harness)?.models ?? [];
+
+  const pick = (models: ReadonlyArray<HarnessModel>) =>
+    models.find((m) => m.id === model) ?? models.find((m) => m.isDefault);
 </script>
 
-<h1 class="mb-6 text-2xl font-bold">Settings</h1>
+<h1 class="text-3xl font-bold">Settings</h1>
 
 {#if !data.isHost}
   <div role="alert" class="alert mb-6"><span>Only the host can change settings.</span></div>
@@ -25,23 +40,62 @@
       </label>
 
       <label class="flex flex-col gap-1">
-        <span class="label">AI harness</span>
-        <select class="select" name="harness" value={data.settings.harness}>
-          <option value="claude">Claude Code</option>
-          <option value="codex">Codex</option>
-          <option value="pi">Pi</option>
+        <span class="label">AI</span>
+        <select class="select" name="harness" bind:value={harness} onchange={() => ((model = ""), (effort = ""), (fast = false))}>
+          {#each Object.entries(NAMES) as [k, label] (k)}<option value={k}>{label}</option>{/each}
         </select>
-      </label>
-
-      <label class="flex flex-col gap-1">
-        <span class="label">Model (optional)</span>
-        <input class="input" name="model" bind:value={model} placeholder="harness default" />
-        {#if /haiku|mini|nano|flash|small/i.test(model)}
-          <span class="text-warning text-sm">
-            Small models got raid numbers wrong in testing. Use a Sonnet-class model or better.
-          </span>
+        {#if data.local}
+          <a class="link text-sm" href="/setup">Install, update or sign in to an AI</a>
         {/if}
       </label>
+
+      {#await data.harnesses}
+        <p class="flex items-center gap-2 text-sm"><span class="loading loading-spinner loading-xs"></span>Loading models from {NAMES[harness]}…</p>
+        <input type="hidden" name="model" value={model} />
+        <input type="hidden" name="effort" value={effort} />
+        {#if fast}<input type="hidden" name="fast" value="on" />{/if}
+      {:then harnesses}
+        {@const models = typeof harnesses === "string" ? [] : modelsFor(harnesses)}
+        {@const current = pick(models)}
+        {#if models.length === 0}
+          <p class="text-warning text-sm">
+            {typeof harnesses === "string" ? `Sandbox unavailable: ${harnesses}` : `${NAMES[harness]} isn't ready, so its models can't be listed. Finish setting it up first.`}
+          </p>
+          <input type="hidden" name="model" value={model} />
+          <input type="hidden" name="effort" value={effort} />
+        {:else}
+          <label class="flex flex-col gap-1">
+            <span class="label">Model</span>
+            <select class="select" name="model" bind:value={model} onchange={() => (effort = "")}>
+              <option value="">{NAMES[harness]} default</option>
+              {#each models as m (m.id)}<option value={m.id}>{m.label}</option>{/each}
+              {#if model !== "" && !models.some((m) => m.id === model)}<option value={model}>{model} (saved)</option>{/if}
+            </select>
+            {#if /haiku|mini|nano|flash|small/i.test(current?.label ?? model)}
+              <span class="text-warning text-sm">
+                Small models got raid numbers wrong in testing. Use a Sonnet-class model or better.
+              </span>
+            {/if}
+          </label>
+
+          {#if (current?.efforts.length ?? 0) > 0}
+            <label class="flex flex-col gap-1">
+              <span class="label">Reasoning</span>
+              <select class="select" name="effort" bind:value={effort}>
+                <option value="">Default{current?.defaultEffort ? ` (${current.defaultEffort})` : ""}</option>
+                {#each current?.efforts ?? [] as e (e)}<option value={e}>{e}</option>{/each}
+              </select>
+            </label>
+          {/if}
+
+          {#if current?.fast}
+            <label class="label gap-3">
+              <input type="checkbox" class="toggle toggle-primary" name="fast" bind:checked={fast} />
+              Fast mode (quicker replies, uses your plan's limits faster)
+            </label>
+          {/if}
+        {/if}
+      {/await}
 
       <label class="flex flex-col gap-1">
         <span class="label">Allowlist: SteamID64s who can use the AI and this portal</span>

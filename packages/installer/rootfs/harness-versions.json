@@ -1,0 +1,13 @@
+{
+  "claude": {
+    "package": "@anthropic-ai/claude-code",
+    "min": "2.1.280",
+    "pin": "2.1.296"
+  },
+  "codex": { "package": "@openai/codex", "min": "0.156.0", "pin": "0.162.1" },
+  "pi": {
+    "package": "@earendil-works/pi-coding-agent",
+    "min": "1.1.0",
+    "pin": "1.1.0"
+  }
+}

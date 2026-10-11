@@ -6,7 +6,7 @@
   const time = (ms: number) => new Date(ms).toLocaleString();
 </script>
 
-<h1 class="mb-6 text-2xl font-bold">Activity</h1>
+<h1 class="text-3xl font-bold">Activity</h1>
 
 {#if data.entries.length === 0}
   <div class="alert"><span>No plugin errors or throttling. All quiet.</span></div>

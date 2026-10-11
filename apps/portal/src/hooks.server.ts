@@ -8,7 +8,7 @@ import * as Session from "#lib/server/session.ts";
 // "/p%61ir" reaches the /pair route while a pathname check would not match it.
 const PUBLIC = new Set(["/auth/login", "/auth/callback"]);
 
-const LOCAL_ONLY = new Set(["/pair", "/harness"]);
+const LOCAL_ONLY = new Set(["/setup"]);
 
 /** Everything except the login flow requires the host or an allowlisted SID64. */
 export const handle: Handle = async ({ event, resolve }) => {
@@ -34,7 +34,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   if (b.pairing().hostSteamId === "")
     return local
-      ? redirect(303, "/pair")
+      ? redirect(303, "/setup")
       : new Response("Setup not finished on the host PC.", { status: 403 });
 
   if (PUBLIC.has(route)) return resolve(event);

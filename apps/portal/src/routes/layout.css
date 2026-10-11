@@ -1,4 +1,37 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: dark --default;
+  themes: false;
+}
+
+/* Rust-flavoured dark theme: oxidised orange on gunmetal. */
+@plugin "daisyui/theme" {
+  name: "rust";
+  default: true;
+  color-scheme: dark;
+  --color-base-100: oklch(20% 0.01 60);
+  --color-base-200: oklch(24% 0.012 60);
+  --color-base-300: oklch(30% 0.014 60);
+  --color-base-content: oklch(92% 0.01 70);
+  --color-primary: oklch(62% 0.18 38);
+  --color-primary-content: oklch(98% 0.01 70);
+  --color-secondary: oklch(72% 0.12 75);
+  --color-secondary-content: oklch(20% 0.02 60);
+  --color-accent: oklch(70% 0.15 150);
+  --color-accent-content: oklch(18% 0.02 150);
+  --color-neutral: oklch(28% 0.012 60);
+  --color-neutral-content: oklch(90% 0.01 70);
+  --color-info: oklch(70% 0.12 230);
+  --color-info-content: oklch(18% 0.02 230);
+  --color-success: oklch(70% 0.15 150);
+  --color-success-content: oklch(18% 0.02 150);
+  --color-warning: oklch(80% 0.15 85);
+  --color-warning-content: oklch(20% 0.02 85);
+  --color-error: oklch(63% 0.2 28);
+  --color-error-content: oklch(98% 0.01 28);
+  --radius-selector: 0.25rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 1;
 }

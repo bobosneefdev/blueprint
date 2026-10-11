@@ -18,15 +18,18 @@ test("merge applies settings and drops blank optionals", () => {
     allowlist: ["2"],
     harness: "pi",
     model: undefined,
+    effort: undefined,
+    fast: false,
     ntfyTopic: "t",
   });
 
-  expect([c.botName, c.allowlist, c.harness, "model" in c, c.ntfyTopic, c.hostSteamId]).toEqual([
-    "rusty",
-    ["2"],
-    "pi",
-    false,
-    "t",
-    "1",
-  ]);
+  expect([
+    c.botName,
+    c.allowlist,
+    c.harness,
+    "model" in c,
+    "fast" in c,
+    c.ntfyTopic,
+    c.hostSteamId,
+  ]).toEqual(["rusty", ["2"], "pi", false, false, "t", "1"]);
 });

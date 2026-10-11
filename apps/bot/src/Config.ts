@@ -20,6 +20,8 @@ export const Config = Schema.Struct({
   allowlist: Schema.Array(Schema.String),
   harness: Harness,
   model: Schema.optionalKey(Schema.String),
+  effort: Schema.optionalKey(Schema.String),
+  fast: Schema.optionalKey(Schema.Boolean),
   portalPort: Schema.Number,
   rpcPort: Schema.Number,
   sessionSecret: Schema.String,
@@ -75,10 +77,12 @@ export const merge = (
     readonly allowlist: ReadonlyArray<string>;
     readonly harness: Config["harness"];
     readonly model: string | undefined;
+    readonly effort: string | undefined;
+    readonly fast: boolean;
     readonly ntfyTopic: string | undefined;
   },
 ): Config => {
-  const { model: _m, ntfyTopic: _n, ...base } = c;
+  const { model: _m, effort: _e, fast: _f, ntfyTopic: _n, ...base } = c;
   const out: Record<string, Schema.Json> = JSON.parse(JSON.stringify(base));
 
   out.botName = next.botName;
@@ -86,6 +90,10 @@ export const merge = (
   out.harness = next.harness;
 
   if (next.model) out.model = next.model;
+
+  if (next.effort) out.effort = next.effort;
+
+  if (next.fast) out.fast = true;
 
   if (next.ntfyTopic) out.ntfyTopic = next.ntfyTopic;
 

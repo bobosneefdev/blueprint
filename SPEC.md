@@ -171,7 +171,7 @@ drvfs ignores `ro` for the agent, so game data is copied in rather than mounted.
 ## Native Windows verification (Windows 11 VM, 2026-10-10)
 
 All dsl/core/bot test suites pass natively under Bun on Windows (one POSIX-sh test skipped by
-design). The compiled `blueprint-bot.exe` boots: portal redirects to /pair, RPC rejects
+design). The compiled `blueprint-bot.exe` boots: portal redirects to /setup, RPC rejects
 unauthenticated calls, workspace is seeded via bundled MinGit. Fixed on the way: `URL.pathname`
 yields `/C:/...` on Windows (use `fileURLToPath`).
 

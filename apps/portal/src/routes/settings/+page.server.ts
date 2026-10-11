@@ -6,6 +6,9 @@ const SID64 = /^7656119\d{10}$/;
 export const load = ({ locals }) => ({
   settings: bot().settings(),
   isHost: locals.sid64 === bot().hostSteamId(),
+  local: locals.local,
+  // Streamed: the live model list comes from the harness CLI in the sandbox.
+  harnesses: bot().harnesses(),
 });
 
 export const actions = {
@@ -26,6 +29,18 @@ export const actions = {
     if (harness !== "claude" && harness !== "codex" && harness !== "pi")
       return fail(400, { error: "Pick a harness." });
 
+    const model = String(f.get("model") ?? "").trim() || undefined;
+    const effort = String(f.get("effort") ?? "").trim() || undefined;
+
+    // Both reach the harness's argv; the pickers offer the CLI's own ids, but forms can be forged.
+    if (model !== undefined && !/^[\w.:/[\]-]{1,100}$/.test(model))
+      return fail(400, {
+        error: "That model id has characters no model uses.",
+      });
+
+    if (effort !== undefined && !/^[a-z]{1,16}$/.test(effort))
+      return fail(400, { error: "Unknown reasoning level." });
+
     const bad = allowlist.find((s) => !SID64.test(s));
 
     if (bad !== undefined) return fail(400, { error: `Not a SteamID64: ${bad}` });
@@ -34,7 +49,9 @@ export const actions = {
       botName,
       harness,
       allowlist,
-      model: String(f.get("model") ?? "").trim() || undefined,
+      model,
+      effort,
+      fast: f.get("fast") === "on",
       ntfyTopic: String(f.get("ntfyTopic") ?? "").trim() || undefined,
     });
 

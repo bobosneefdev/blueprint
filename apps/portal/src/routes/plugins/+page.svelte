@@ -5,7 +5,7 @@
   let { data }: PageProps = $props();
 </script>
 
-<h1 class="mb-6 text-2xl font-bold">Plugins</h1>
+<h1 class="text-3xl font-bold">Plugins</h1>
 
 <div class="flex flex-col gap-4">
   {#each data.plugins as p (p.name)}

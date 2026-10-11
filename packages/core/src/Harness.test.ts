@@ -32,3 +32,23 @@ test("resume flags per harness", () => {
   expect(argv({ ...base, kind: "codex" }).slice(0, 4)).toEqual(["codex", "exec", "resume", "x"]);
   expect(argv({ ...base, kind: "pi" })).toContain("--session-id");
 });
+
+test("reasoning level and fast mode per harness", () => {
+  const base = {
+    prompt: "hi",
+    systemPrompt: "sys",
+    session: undefined,
+    model: "m",
+  };
+
+  const on = { ...base, effort: "high", fast: true };
+
+  expect(argv({ ...on, kind: "claude" }).join(" ")).toContain(
+    '--effort high --settings {"fastMode":true}',
+  );
+  expect(argv({ ...on, kind: "codex" }).join(" ")).toContain(
+    '-c model_reasoning_effort="high" -c service_tier="fast"',
+  );
+  expect(argv({ ...on, kind: "pi" }).join(" ")).toContain("--thinking high");
+  expect(argv({ ...base, kind: "claude" })).not.toContain("--effort");
+});

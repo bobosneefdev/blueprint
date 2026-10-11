@@ -7,7 +7,12 @@ import * as Sandbox from "./Sandbox.ts";
 
 export interface Deps {
   readonly settings: () => Agent.Settings;
-  readonly harness: () => { readonly kind: Harness.Kind; readonly model: string | undefined };
+  readonly harness: () => {
+    readonly kind: Harness.Kind;
+    readonly model: string | undefined;
+    readonly effort: string | undefined;
+    readonly fast: boolean;
+  };
   /** Sends one team chat line (already prefixed and truncated by the caller's sink). */
   readonly chat: (line: string) => Promise<void>;
   /** Per-requester harness session id. */
@@ -123,7 +128,7 @@ export const make = (deps: Deps) => {
   async function job(steamId: string, name: string, prompt: string, settings: Agent.Settings) {
     if (process.platform === "win32") await deps.prepareSandbox();
 
-    const { kind, model } = deps.harness();
+    const { kind, model, effort, fast } = deps.harness();
     const { token, revoke } = deps.issueRpcToken(steamId);
     const previous = deps.sessions.get(steamId);
 
@@ -132,6 +137,8 @@ export const make = (deps: Deps) => {
       prompt: `[${name}] ${prompt}`,
       systemPrompt: Agent.systemPrompt(settings),
       model,
+      effort,
+      fast,
       session: previous,
     });
 

@@ -4,11 +4,12 @@
   let { data }: PageProps = $props();
 </script>
 
-<h1 class="mb-6 text-2xl font-bold">Servers</h1>
+<h1 class="text-3xl font-bold">Servers</h1>
 
 {#if data.servers.length === 0}
   <div class="alert">
     <span>No servers paired yet. In game: ESC → Rust+ → Pair with Server.</span>
+    {#if data.setupLink}<a class="btn btn-sm btn-primary" href="/setup">Finish setup</a>{/if}
   </div>
 {/if}
 

@@ -8,6 +8,7 @@
 // agent-share holds only plugin files (no .git): the bot's git repo, config.json and the db are
 // never visible to the agent. See Workspace.ts for how files move between the two.
 import { join } from "node:path";
+import egressAllow from "../../../packages/installer/rootfs/egress-allow.txt" with { type: "text" };
 
 export const DISTRO = "blueprint-agent";
 
@@ -22,20 +23,44 @@ const wsl = (...args: string[]) => {
 
 export const installed = () => wsl("--list", "--quiet").out.split(/\r?\n/).includes(DISTRO);
 
-/** First run: import the rootfs tarball the installer downloaded. */
+let importing: Promise<void> | undefined;
+
+/**
+ * First run: import the rootfs tarball the installer downloaded. Async (an import takes a minute
+ * and must not stall Rust+ or the portal) and shared, so concurrent callers import once.
+ */
 export const ensure = (home: string) => {
-  if (installed()) return;
+  if (installed()) return Promise.resolve();
 
-  const r = wsl(
-    "--import",
-    DISTRO,
-    join(home, "wsl"),
-    join(home, "blueprint-agent.tar.gz"),
-    "--version",
-    "2",
-  );
+  importing ??= (async () => {
+    const p = Bun.spawn(
+      [
+        "wsl.exe",
+        "--import",
+        DISTRO,
+        join(home, "wsl"),
+        join(home, "blueprint-agent.tar.gz"),
+        "--version",
+        "2",
+      ],
+      { stdout: "pipe", stderr: "pipe" },
+    );
 
-  if (!r.ok) throw new Error(`wsl --import failed: ${r.err || r.out}`);
+    const [out, err, code] = await Promise.all([
+      new Response(p.stdout).arrayBuffer(),
+      new Response(p.stderr).arrayBuffer(),
+      p.exited,
+    ]);
+
+    // wsl.exe writes UTF-16LE for its own messages.
+    const text = (b: ArrayBuffer) => Buffer.from(b).toString("utf16le").replaceAll("\0", "").trim();
+
+    if (code !== 0) throw new Error(`wsl --import failed: ${text(err) || text(out)}`);
+  })().finally(() => {
+    importing = undefined;
+  });
+
+  return importing;
 };
 
 /**
@@ -96,8 +121,8 @@ export const mountScript = (share: string, gameData: string) =>
     "chown -R root:root /data/rust-items-json && chmod -R a+rX,go-w /data/rust-items-json",
   ].join("\n");
 
-export const prepare = (home: string, share: string) => {
-  ensure(home);
+export const prepare = async (home: string, share: string) => {
+  await ensure(home);
 
   const r = wsl(
     "-d",
@@ -111,4 +136,35 @@ export const prepare = (home: string, share: string) => {
   );
 
   if (!r.ok) throw new Error(`sandbox setup failed: ${r.err || r.out}`);
+};
+
+/**
+ * Brings an already-imported sandbox up to this release's system files. The rootfs is only
+ * imported once, so later releases' egress hosts and packages would otherwise never arrive.
+ * Root-only, idempotent; the firewall is rebuilt only when the allowlist changed.
+ */
+export const syncSystem = () => {
+  const r = Bun.spawnSync(
+    [
+      "wsl.exe",
+      "-d",
+      DISTRO,
+      "-u",
+      "root",
+      "--",
+      "sh",
+      "-c",
+      [
+        "set -e",
+        "cat > /tmp/egress-allow.txt",
+        "command -v script >/dev/null || apk add --no-cache -q util-linux-misc",
+        "cmp -s /tmp/egress-allow.txt /etc/egress-allow.txt && exit 0",
+        "mv /tmp/egress-allow.txt /etc/egress-allow.txt",
+        "/usr/local/sbin/egress-firewall",
+      ].join("\n"),
+    ],
+    { stdin: new TextEncoder().encode(egressAllow), stdout: "pipe", stderr: "pipe" },
+  );
+
+  if (r.exitCode !== 0) throw new Error(`sandbox update failed: ${r.stderr.toString().trim()}`);
 };

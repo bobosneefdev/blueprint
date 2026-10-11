@@ -23,6 +23,7 @@ import * as AgentRunner from "./AgentRunner.ts";
 import * as Config from "./Config.ts";
 import * as GameData from "./GameData.ts";
 import * as HarnessAuth from "./HarnessAuth.ts";
+import * as Harnesses from "./Harnesses.ts";
 import * as Notify from "./Notify.ts";
 import * as Sandbox from "./Sandbox.ts";
 import * as SteamLogin from "./SteamLogin.ts";
@@ -69,7 +70,7 @@ const refreshAgentShare = async () => {
 
 const prepareSandbox = async () => {
   await refreshAgentShare();
-  Sandbox.prepare(home, agentShare);
+  await Sandbox.prepare(home, agentShare);
   rebindRpc();
 };
 
@@ -190,12 +191,29 @@ attach({
   saveHarnessCredential: async (c) => {
     await prepareSandbox();
     HarnessAuth.save(c);
+    Harnesses.stale();
   },
+  harnesses: () =>
+    Harnesses.ready(home)
+      .then(Harnesses.status)
+      .catch((e: Error) => e.message),
+  installHarness: async (kind) => {
+    await Harnesses.ready(home);
+    await Harnesses.install(kind);
+  },
+  startHarnessLogin: async (kind) => {
+    await Harnesses.ready(home);
+    await Harnesses.startLogin(kind);
+  },
+  harnessLogin: Harnesses.login,
+  answerHarnessLogin: Harnesses.answerLogin,
   settings: () => ({
     botName: config.botName,
     allowlist: config.allowlist,
     harness: config.harness,
     model: config.model,
+    effort: config.effort,
+    fast: config.fast === true,
     ntfyTopic: config.ntfyTopic,
   }),
   saveSettings: async (next) => {
@@ -317,7 +335,12 @@ const runAgent = AgentRunner.make({
     allowlist: config.allowlist,
     portalUrl: publicUrl,
   }),
-  harness: () => ({ kind: config.harness, model: config.model }),
+  harness: () => ({
+    kind: config.harness,
+    model: config.model,
+    effort: config.effort,
+    fast: config.fast === true,
+  }),
   chat: chatAll,
   sessions,
   replies,

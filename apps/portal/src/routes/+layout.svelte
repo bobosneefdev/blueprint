@@ -12,6 +12,9 @@
     { href: "/activity", label: "Activity" },
     { href: "/settings", label: "Settings" },
   ];
+
+  // The wizard and the sign-in redirects are full-page; everything else gets the nav.
+  let bare = $derived(page.route.id === "/setup" || page.url.pathname.startsWith("/auth"));
 </script>
 
 <svelte:head>
@@ -19,25 +22,24 @@
   <title>Blueprint</title>
 </svelte:head>
 
-{#if page.url.pathname.startsWith("/auth") || page.url.pathname === "/pair" || page.url.pathname === "/harness"}
+{#if bare}
   {@render children()}
 {:else}
-  <nav class="navbar bg-base-200 px-4">
-    <div class="navbar-start gap-2">
-      <span class="text-lg font-bold">Blueprint</span>
-    </div>
-    <div class="navbar-center">
-      <ul class="menu menu-horizontal">
+  <header class="border-base-300 border-b">
+    <nav class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 md:px-8">
+      <a href="/" class="flex items-center gap-2 font-bold">
+        <img src={favicon} alt="" class="size-7" />
+        Blueprint
+      </a>
+      <ul class="menu menu-horizontal flex-1 p-0">
         {#each links as l (l.href)}
           <li><a href={l.href} class={{ "menu-active": page.url.pathname === l.href }}>{l.label}</a></li>
         {/each}
       </ul>
-    </div>
-    <div class="navbar-end">
       <form method="POST" action="/auth/logout"><button class="btn btn-ghost btn-sm">Sign out</button></form>
-    </div>
-  </nav>
-  <main class="mx-auto max-w-5xl p-4 md:p-8">
+    </nav>
+  </header>
+  <main class="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 md:px-8">
     {@render children()}
   </main>
 {/if}

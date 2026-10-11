@@ -14,6 +14,9 @@ export interface Turn {
   readonly session: string | undefined;
   readonly systemPrompt: string;
   readonly model: string | undefined;
+  /** Reasoning level from the harness's own model list (validated as a bare word upstream). */
+  readonly effort?: string | undefined;
+  readonly fast?: boolean | undefined;
 }
 
 export interface Reply {
@@ -25,6 +28,7 @@ export interface Reply {
 /** Builds the command line for one turn. Pure, so it is testable without the harness installed. */
 export const argv = (t: Turn): string[] => {
   const model = t.model === undefined ? [] : ["--model", t.model];
+  const effort = t.effort === undefined ? [] : [t.effort];
 
   switch (t.kind) {
     case "claude":
@@ -38,6 +42,8 @@ export const argv = (t: Turn): string[] => {
         "--append-system-prompt",
         t.systemPrompt,
         ...model,
+        ...effort.flatMap((e) => ["--effort", e]),
+        ...(t.fast === true ? ["--settings", '{"fastMode":true}'] : []),
         ...(t.session === undefined ? [] : ["--resume", t.session]),
       ];
     case "codex":
@@ -50,6 +56,8 @@ export const argv = (t: Turn): string[] => {
         "--dangerously-bypass-approvals-and-sandbox",
         "--skip-git-repo-check",
         ...(t.model === undefined ? [] : ["-m", t.model]),
+        ...effort.flatMap((e) => ["-c", `model_reasoning_effort="${e}"`]),
+        ...(t.fast === true ? ["-c", 'service_tier="fast"'] : []),
         t.prompt,
       ];
     case "pi":
@@ -60,6 +68,7 @@ export const argv = (t: Turn): string[] => {
         "--append-system-prompt",
         t.systemPrompt,
         ...model,
+        ...effort.flatMap((e) => ["--thinking", e]),
         ...(t.session === undefined ? [] : ["--session-id", t.session]),
         t.prompt,
       ];

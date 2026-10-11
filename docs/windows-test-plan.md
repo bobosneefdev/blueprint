@@ -6,7 +6,7 @@ the cross-checks cover the rest (see SPEC.md). Run in order; each step lists wha
 Already verified on the Windows 11 VM (2026-10-10), see SPEC.md: all test suites natively, the
 compiled sidecar booting, WSL2 sandbox isolation (drives, interop, sudo, egress, DNS, loopback),
 and the sandboxed `bot` CLI reaching the real bot RPC. Still needs a person: §2 (Steam sign-in
-window + in-game pairing), §4 (live agent in chat, needs your harness credential via /harness),
+window + in-game pairing), §4 (live agent in chat, needs an AI signed in via /setup),
 §5 (tray + NSIS installer), §6 (toast/phone).
 
 If anything misbehaves, the bot's output is in `%LOCALAPPDATA%\blueprint\blueprint.log`.
@@ -29,12 +29,13 @@ Sandbox image (needs Docker, or use the release artifact):
 - `$env:CLOUDFLARED="<path>\cloudflared.exe"; .\apps\bot\dist\blueprint-bot.exe`
 - Expect: `portal: https://….trycloudflare.com` in the console and a team-chat line once a server
   is paired.
-- `http://127.0.0.1:47614` → redirects to `/pair` on first run.
+- `http://127.0.0.1:47614` → redirects to `/setup` on first run.
 
 ## 2. Rust+ sign-in and pairing (spike 1 already passed this on the user's PC)
 
-- `/pair` → Sign in with Steam → Edge opens Facepunch's page with their warning → sign in.
-- Expect: "Signed in"; `%LOCALAPPDATA%\blueprint\config.json` has `rustplus`.
+- `/setup` step 1 → Sign in with Steam → Edge opens Facepunch's page with their warning → sign in.
+- Expect: step 1 ticks; `%LOCALAPPDATA%\blueprint\config.json` has `rustplus`; the portal is
+  signed in without a second Steam login.
 - In game: ESC → Rust+ → Pair with Server → server appears on `/` within ~10s.
 - Pair a smart switch named "Lights" → `workspace\servers\<id>\bindings.json` binds `lights`;
   enable night-lights on `/plugins`.
@@ -42,7 +43,9 @@ Sandbox image (needs Docker, or use the release artifact):
 ## 3. Sandbox
 
 - Copy `blueprint-agent.tar.gz` to `%LOCALAPPDATA%\blueprint\`.
-- `/harness` → paste a Claude token (`claude setup-token`) or API key → "Saved to the sandbox".
+- `/setup` step 2 lists Claude Code, Codex and Pi with versions. "Sign in with Claude" opens
+  claude.com; paste the code back. "Sign in with ChatGPT" shows a device code for openai.com.
+  Both end "Signed in". `/settings` then lists that AI's live models, reasoning levels and fast mode.
 - `wsl -l -v` shows `blueprint-agent` (version 2).
 - Escape checks, inside `wsl -d blueprint-agent -u agent`:
   - `ls /mnt` shows no drives.

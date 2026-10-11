@@ -75,5 +75,8 @@ export const save = (c: Credential) => {
   }
 };
 
-/** Prefix for every harness run so the stored credentials are in the environment. */
-export const ENV_PRELUDE = ". ~/.harness-env 2>/dev/null;";
+/**
+ * Prefix for every harness run so the stored credentials are in the environment. A bare
+ * `. missing-file` exits POSIX sh even with 2>/dev/null, so the file is tested first.
+ */
+export const ENV_PRELUDE = "[ -f ~/.harness-env ] && . ~/.harness-env;";
