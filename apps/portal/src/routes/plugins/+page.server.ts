@@ -1,7 +1,12 @@
-import { fail } from "@sveltejs/kit";
+import { error, fail } from "@sveltejs/kit";
 import { bot } from "#lib/server/bot.ts";
 
-export const load = () => ({
+const adminOnly = (role: App.Locals["role"]) => {
+  if (role !== "admin") error(403, "Only the host or an admin can change plugins.");
+};
+
+export const load = ({ locals }) => ({
+  isAdmin: locals.role === "admin",
   plugins: bot()
     .plugins()
     .map((p) => ({
@@ -16,6 +21,7 @@ export const load = () => ({
 
 export const actions = {
   toggle: async ({ request, locals }) => {
+    adminOnly(locals.role);
     const form = await request.formData();
     const name = String(form.get("name") ?? "");
 
@@ -24,6 +30,7 @@ export const actions = {
     await bot().setEnabled(name, form.get("enabled") === "true", locals.sid64);
   },
   rollback: async ({ request, locals }) => {
+    adminOnly(locals.role);
     const form = await request.formData();
     const name = String(form.get("name") ?? "");
     const commit = String(form.get("commit") ?? "");

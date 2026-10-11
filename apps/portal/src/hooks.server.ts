@@ -10,7 +10,7 @@ const PUBLIC = new Set(["/auth/login", "/auth/callback"]);
 
 const LOCAL_ONLY = new Set(["/setup"]);
 
-/** Everything except the login flow requires the host or an allowlisted SID64. */
+/** Everything except the login flow requires the host or a teammate with a role on some server. */
 export const handle: Handle = async ({ event, resolve }) => {
   const b = bot();
   const sid64 = Session.read(b.sessionSecret, event.cookies.get("session"));
@@ -41,8 +41,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   if (sid64 === undefined) redirect(303, "/auth/login");
 
-  if (sid64 !== b.hostSteamId() && !b.allowlist().includes(sid64))
-    return new Response("Forbidden: ask the host to add your Steam account.", { status: 403 });
+  const role = b.role(sid64);
+
+  if (role === "none")
+    return new Response("Forbidden: ask the host to give you a role.", { status: 403 });
+
+  event.locals.role = role;
 
   return resolve(event);
 };

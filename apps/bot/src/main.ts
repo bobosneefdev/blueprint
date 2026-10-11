@@ -3,6 +3,7 @@
 //   rpc     127.0.0.1:rpcPort     -> `bot` CLI inside WSL (mirrored networking), token-gated
 //   servers one Rust+ websocket per paired server, plugin runtime + recorder
 import {
+  Agent,
   Bindings,
   Db,
   Pairing,
@@ -48,6 +49,25 @@ if (trayPid > 0)
 const home = Config.dataDir();
 
 const db = Db.open(join(home, "blueprint.db"));
+
+if (config.allowlist !== undefined) {
+  config = Config.migrateAllowlist(
+    config,
+    Db.listServers(db).map((s) => s.id),
+  );
+  await Config.save(config);
+}
+
+const roles = () => config.roles ?? {};
+
+/** Highest role on any server: plugins are shared by every server, so admin anywhere manages them. */
+const bestRole = (steamId: string): Agent.Role => {
+  if (steamId === config.hostSteamId) return "admin";
+
+  const all = Object.values(roles()).map((r) => r[steamId]);
+
+  return all.includes("admin") ? "admin" : all.includes("interact") ? "interact" : "none";
+};
 
 const workspaceDir = join(home, "workspace");
 
@@ -135,6 +155,9 @@ let publicUrl = `http://127.0.0.1:${config.portalPort}`;
 /** token -> requester SID64, live only while that requester's agent job runs. */
 const rpcTokens = new Map<string, string>();
 
+/** Requester SID64 -> server their running job came from (one job per requester at a time). */
+const jobServer = new Map<string, string>();
+
 const anyServer = (id: string | undefined) => id ?? [...worlds.keys()][0];
 
 const chatAll = async (line: string) => {
@@ -147,7 +170,7 @@ const { attach } = await import("@blueprint/portal/src/lib/server/bot.ts");
 attach({
   sessionSecret: config.sessionSecret,
   hostSteamId: () => config.hostSteamId,
-  allowlist: () => config.allowlist,
+  role: bestRole,
   publicUrl: () => publicUrl,
   servers: () =>
     Db.listServers(db).map((s) => ({ id: s.id, name: s.name, world: worlds.get(s.id) })),
@@ -175,13 +198,22 @@ attach({
 
     if (!fetcher) return Promise.resolve(undefined);
 
-    const p = fetcher().then((m) =>
-      m?.jpgImage
-        ? { jpg: Buffer.from(m.jpgImage, "base64"), oceanMargin: m.oceanMargin ?? 0 }
-        : undefined,
+    // A failed or empty getMap (rate limit, timeout, mid-reconnect) must not be cached, or the
+    // map stays broken until restart.
+    const p = fetcher().then(
+      (m) =>
+        m?.jpgImage
+          ? { jpg: Buffer.from(m.jpgImage, "base64"), oceanMargin: m.oceanMargin ?? 0 }
+          : undefined,
+      (e) => {
+        console.warn("map fetch failed", e);
+
+        return undefined;
+      },
     );
 
     mapCache.set(id, p);
+    void p.then((m) => m === undefined && mapCache.delete(id));
 
     return p;
   },
@@ -209,12 +241,13 @@ attach({
   answerHarnessLogin: Harnesses.answerLogin,
   settings: () => ({
     botName: config.botName,
-    allowlist: config.allowlist,
+    roles: roles(),
     harness: config.harness,
     model: config.model,
     effort: config.effort,
     fast: config.fast === true,
     ntfyTopic: config.ntfyTopic,
+    discordWebhook: config.discordWebhook,
   }),
   saveSettings: async (next) => {
     config = Config.merge(config, next);
@@ -282,6 +315,15 @@ const rpcServe = () =>
       bindings: (id) => Effect.runSync(Ref.get(bindingRef(anyServer(id) ?? ""))),
       recorded: (id, from) => Db.recorded(db, anyServer(id) ?? "", from),
       propose: async (requester, r) => {
+        const server = jobServer.get(requester);
+
+        if (
+          server === undefined ||
+          Agent.roleOf({ hostSteamId: config.hostSteamId, roles: roles() }, server, requester) !==
+            "admin"
+        )
+          return "not proposed: only the host or a server admin can add plugins. Tell the requester to ask one.";
+
         const p = {
           plugin: r.plugin,
           code: Proposal.makeCode(),
@@ -332,7 +374,7 @@ const runAgent = AgentRunner.make({
   settings: () => ({
     name: config.botName,
     hostSteamId: config.hostSteamId,
-    allowlist: config.allowlist,
+    roles: roles(),
     portalUrl: publicUrl,
   }),
   harness: () => ({
@@ -344,25 +386,35 @@ const runAgent = AgentRunner.make({
   chat: chatAll,
   sessions,
   replies,
-  issueRpcToken: (steamId) => {
+  issueRpcToken: (steamId, serverId) => {
     const token = randomBytes(24).toString("base64url");
 
     rpcTokens.set(token, steamId);
+    jobServer.set(steamId, serverId);
 
-    return { token, revoke: () => void rpcTokens.delete(token) };
+    return {
+      token,
+      revoke: () => {
+        rpcTokens.delete(token);
+        jobServer.delete(steamId);
+      },
+    };
   },
   rpcUrl: () => `http://${rpcHost}:${config.rpcPort}`,
   prepareSandbox,
 });
 
 /** "@bot yes" / "@bot undo" are handled here; everything else goes to the harness. */
-const onAgentMessage = async (steamId: string, name: string, text: string) => {
+const onAgentMessage = async (serverId: string, steamId: string, name: string, text: string) => {
   const body = text.replace(new RegExp(`^\\s*@${config.botName}\\b[\\s,:]*`, "i"), "").trim();
-  const isHost = steamId === config.hostSteamId || config.allowlist.includes(steamId);
+
+  const isAdmin =
+    Agent.roleOf({ hostSteamId: config.hostSteamId, roles: roles() }, serverId, steamId) ===
+    "admin";
 
   const yes = /^(?:yes|confirm|y)(?:\s+(\d{4}))?$/i.exec(body);
 
-  if (isHost && yes) {
+  if (isAdmin && yes) {
     const r = Proposal.confirm(pending.get(steamId), yes[1], Date.now());
 
     if (r.kind === "none") return chatAll(`${name}: nothing pending`);
@@ -383,7 +435,7 @@ const onAgentMessage = async (steamId: string, name: string, text: string) => {
     return chatAll(`${r.plugin.name} is live`);
   }
 
-  if (isHost && /^undo$/i.test(body)) {
+  if (isAdmin && /^undo$/i.test(body)) {
     const undone = Workspace.undoLast(workspaceDir, name);
 
     await reloadPlugins();
@@ -391,7 +443,7 @@ const onAgentMessage = async (steamId: string, name: string, text: string) => {
     return chatAll(undone ? `undid ${undone.slice(0, 7)}` : "nothing to undo");
   }
 
-  return runAgent(steamId, name, text);
+  return runAgent(serverId, steamId, name, text);
 };
 
 // ── Servers ──────────────────────────────────────────────────────────────────────────────────────
@@ -448,14 +500,18 @@ const runServer = (s: Db.ServerRow) =>
           Effect.promise(() =>
             saveBindings(s.id, { devices: [], bindings: {} }, `wipe ${s.name}: reset bindings`),
           ),
-        onAgentMessage: (id, name, text) => Effect.promise(() => onAgentMessage(id, name, text)),
+        onAgentMessage: (id, name, text) =>
+          Effect.promise(() => onAgentMessage(s.id, id, name, text)),
         notify: (text, channel) =>
-          Effect.promise(() => Notify.send(config.ntfyTopic, text, channel).catch(() => undefined)),
+          Effect.promise(() => Notify.send(config, text, channel).catch(() => undefined)),
+        mayCommand: (id) =>
+          Agent.roleOf({ hostSteamId: config.hostSteamId, roles: roles() }, s.id, id) !== "none",
         isAgentMessage: (text) => new RegExp(`^\\s*@${config.botName}\\b`, "i").test(text),
         botPrefix: BOT_PREFIX,
       });
 
       mapFetchers.set(s.id, () => Effect.runPromise(live.map));
+      mapCache.delete(s.id);
       yield* live.world.pipe(Stream.runForEach((w) => Effect.sync(() => w && worlds.set(s.id, w))));
     }),
   ).pipe(

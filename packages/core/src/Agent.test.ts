@@ -1,7 +1,12 @@
 import { expect, test } from "bun:test";
-import { CHAT_LIMIT, chatLines, makeQueue, mayUseAgent, mention } from "./Agent.ts";
+import { CHAT_LIMIT, chatLines, makeQueue, mayUseAgent, mention, roleOf } from "./Agent.ts";
 
-const settings = { name: "bot", hostSteamId: "1", allowlist: ["2"], portalUrl: undefined };
+const settings = {
+  name: "bot",
+  hostSteamId: "1",
+  roles: { a: { "2": "interact", "3": "admin" } } as const,
+  portalUrl: undefined,
+};
 
 test("mention", () => {
   expect(mention(settings, "@bot alert me when cargo spawns")).toBe("alert me when cargo spawns");
@@ -12,12 +17,16 @@ test("mention", () => {
   expect(mention({ ...settings, name: "rusty.ai" }, "@rusty.ai go")).toBe("go");
 });
 
-test("permissions", () => {
+test("roles are per server; host is admin everywhere", () => {
   expect([
-    mayUseAgent(settings, "1"),
-    mayUseAgent(settings, "2"),
-    mayUseAgent(settings, "3"),
-  ]).toEqual([true, true, false]);
+    roleOf(settings, "a", "1"),
+    roleOf(settings, "b", "1"),
+    roleOf(settings, "a", "2"),
+    roleOf(settings, "a", "3"),
+    roleOf(settings, "b", "3"),
+    roleOf(settings, "a", "4"),
+  ]).toEqual(["admin", "admin", "interact", "admin", "none", "none"]);
+  expect([mayUseAgent(settings, "a", "2"), mayUseAgent(settings, "b", "2")]).toEqual([true, false]);
 });
 
 test("chatLines fits Rust chat and links overflow", () => {

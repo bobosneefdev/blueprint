@@ -7,6 +7,10 @@
 
 <h1 class="text-3xl font-bold">Plugins</h1>
 
+{#if !data.isAdmin}
+  <div role="alert" class="alert"><span>Only the host or an admin can turn plugins on/off or restore versions.</span></div>
+{/if}
+
 <div class="flex flex-col gap-4">
   {#each data.plugins as p (p.name)}
     <div class="card bg-base-200">
@@ -23,7 +27,7 @@
             <input type="hidden" name="name" value={p.name} />
             <input type="hidden" name="enabled" value={String(!p.enabled)} />
             <label class="label">
-              <input type="checkbox" class="toggle" checked={p.enabled} onchange={(e) => e.currentTarget.form?.requestSubmit()} />
+              <input type="checkbox" class="toggle" checked={p.enabled} disabled={!data.isAdmin} onchange={(e) => e.currentTarget.form?.requestSubmit()} />
               {p.enabled ? "On" : "Off"}
             </label>
           </form>
@@ -44,7 +48,7 @@
                   <form method="POST" action="?/rollback" use:enhance>
                     <input type="hidden" name="name" value={p.name} />
                     <input type="hidden" name="commit" value={h.commit} />
-                    <button class="btn btn-xs">Restore</button>
+                    <button class="btn btn-xs" disabled={!data.isAdmin}>Restore</button>
                   </form>
                 </li>
               {/each}

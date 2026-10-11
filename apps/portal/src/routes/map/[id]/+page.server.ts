@@ -1,12 +1,13 @@
 import { error } from "@sveltejs/kit";
 import { bot } from "#lib/server/bot.ts";
 
-export const load = async ({ params }) => {
+export const load = ({ params }) => {
   const s = bot()
     .servers()
     .find((x) => x.id === params.id);
 
   if (s === undefined) error(404);
 
-  return { id: s.id, name: s.name, oceanMargin: (await bot().mapImage(s.id))?.oceanMargin ?? 0 };
+  // The map image is fetched by the browser (image.jpg); never block or fail the page on Rust+.
+  return { id: s.id, name: s.name };
 };

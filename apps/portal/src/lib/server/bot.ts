@@ -16,7 +16,8 @@ export interface Bot {
   readonly sessionSecret: string;
   /** Live: empty until first Rust+ sign-in sets it. */
   readonly hostSteamId: () => string;
-  readonly allowlist: () => ReadonlyArray<string>;
+  /** Highest role on any server; the host is "admin". Any role may view the portal. */
+  readonly role: (sid64: string) => Role;
   readonly publicUrl: () => string;
   readonly servers: () => ReadonlyArray<{
     readonly id: string;
@@ -100,13 +101,20 @@ export type HarnessCredential =
 
 export interface Settings {
   readonly botName: string;
-  readonly allowlist: ReadonlyArray<string>;
+  readonly roles: Roles;
   readonly harness: HarnessKind;
   readonly model: string | undefined;
   readonly effort: string | undefined;
   readonly fast: boolean;
   readonly ntfyTopic: string | undefined;
+  readonly discordWebhook: string | undefined;
 }
+
+/** Mirrors @blueprint/core Agent.Role; the portal doesn't import core at runtime. */
+export type Role = "none" | "interact" | "admin";
+
+/** serverId -> SID64 -> role. */
+export type Roles = Readonly<Record<string, Readonly<Record<string, "interact" | "admin">>>>;
 
 // The portal is bundled separately from the bot, so module state is not shared; a global is the
 // one slot both bundles can see.

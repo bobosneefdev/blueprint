@@ -19,7 +19,10 @@ export interface Deps {
   readonly sessions: Map<string, string>;
   readonly replies: Map<string, string>;
   /** Issues a token for the `bot` CLI tied to this requester; revoke when the job ends. */
-  readonly issueRpcToken: (steamId: string) => {
+  readonly issueRpcToken: (
+    steamId: string,
+    serverId: string,
+  ) => {
     readonly token: string;
     readonly revoke: () => void;
   };
@@ -101,10 +104,10 @@ export const make = (deps: Deps) => {
 
   const run = deps.run ?? spawnHarness;
 
-  return async (steamId: string, name: string, text: string) => {
+  return async (serverId: string, steamId: string, name: string, text: string) => {
     const settings = deps.settings();
 
-    if (!Agent.mayUseAgent(settings, steamId)) return;
+    if (!Agent.mayUseAgent(settings, serverId, steamId)) return;
 
     const prompt = Agent.mention(settings, text);
 
@@ -114,7 +117,7 @@ export const make = (deps: Deps) => {
 
     try {
       await deps.chat(`${name}: on it…`);
-      await serial(() => job(steamId, name, prompt, settings));
+      await serial(() => job(serverId, steamId, name, prompt, settings));
     } catch (e) {
       console.error("agent run failed", e);
       await deps.chat(
@@ -125,11 +128,17 @@ export const make = (deps: Deps) => {
     }
   };
 
-  async function job(steamId: string, name: string, prompt: string, settings: Agent.Settings) {
+  async function job(
+    serverId: string,
+    steamId: string,
+    name: string,
+    prompt: string,
+    settings: Agent.Settings,
+  ) {
     if (process.platform === "win32") await deps.prepareSandbox();
 
     const { kind, model, effort, fast } = deps.harness();
-    const { token, revoke } = deps.issueRpcToken(steamId);
+    const { token, revoke } = deps.issueRpcToken(steamId, serverId);
     const previous = deps.sessions.get(steamId);
 
     const argv = Harness.argv({

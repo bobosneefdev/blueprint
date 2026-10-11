@@ -6,7 +6,7 @@ export interface Settings {
   /** Mention name, default "bot". Matched case-insensitively as "@name". */
   readonly name: string;
   readonly hostSteamId: string;
-  readonly allowlist: ReadonlyArray<string>;
+  readonly roles: Roles;
   readonly portalUrl: string | undefined;
 }
 
@@ -22,8 +22,23 @@ export const mention = (settings: Settings, text: string): string | undefined =>
   return m?.[1]?.trim() || undefined;
 };
 
-export const mayUseAgent = (settings: Settings, steamId: string) =>
-  steamId === settings.hostSteamId || settings.allowlist.includes(steamId);
+/**
+ * Per-server privilege, assigned by the host to teammates. interact: @bot questions and plugin
+ * /commands. admin: also confirm new plugins and enable/disable them. The host is admin everywhere.
+ */
+export type Role = "none" | "interact" | "admin";
+
+/** serverId -> SID64 -> role. Absent means "none". */
+export type Roles = Readonly<Record<string, Readonly<Record<string, "interact" | "admin">>>>;
+
+export const roleOf = (
+  s: { readonly hostSteamId: string; readonly roles: Roles },
+  serverId: string,
+  steamId: string,
+): Role => (steamId === s.hostSteamId ? "admin" : (s.roles[serverId]?.[steamId] ?? "none"));
+
+export const mayUseAgent = (settings: Settings, serverId: string, steamId: string) =>
+  roleOf(settings, serverId, steamId) !== "none";
 
 /** Splits on word boundaries into at most `max` chat lines; overflow points at the portal. */
 export const chatLines = (text: string, link: string | undefined, max = 3): string[] => {

@@ -59,7 +59,9 @@ Sandbox image (needs Docker, or use the release artifact):
 - Team chat: `@bot how many rockets for a sheet metal door?` → "on it…" then "2".
 - `@bot ping us when cargo spawns with the grid` → proposal line → `@bot yes <code>` → "cargo-alert is live"
   (or the starter already covers it; try "tell us when a teammate respawns").
-- A non-allowlisted teammate's `@bot …` is ignored; their `@bot yes <code>` does not activate anything.
+- A teammate with role none: `@bot …` and `/commands` are ignored. Interact: `@bot` answers, but
+  `bot propose` refuses and `@bot yes <code>` does nothing. Admin: can confirm. Roles on server A
+  don't apply on server B.
 - `@bot undo` reverts the last plugin change.
 
 ## 5. Tray + installer
@@ -71,4 +73,5 @@ Sandbox image (needs Docker, or use the release artifact):
 
 ## 6. Notifications
 
-- Set an ntfy topic; trigger raid-alarm by tripping the paired alarm → Windows toast + phone push.
+- Set an ntfy topic and a Discord webhook; trip the paired raid alarm → Windows toast, phone push
+  and a Discord message (no @everyone ping even if the text contains one).

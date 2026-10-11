@@ -5,7 +5,7 @@ import { Validate } from "@blueprint/dsl";
 attach({
   sessionSecret: "dev",
   hostSteamId: () => "76561198118274372",
-  allowlist: () => [],
+  role: () => "admin",
   publicUrl: () => "https://calm-river.trycloudflare.com",
   servers: () => [{ id: "1", name: "T", world: Validate.emptyWorld }],
   plugins: () => [],
@@ -16,10 +16,11 @@ attach({
   pair: async () => "",
   settings: () => ({
     botName: "bot",
-    allowlist: [],
+    roles: {},
     harness: "claude",
     model: undefined,
     ntfyTopic: undefined,
+    discordWebhook: undefined,
   }),
   saveSettings: async () => {},
   importPlugin: async () => [],

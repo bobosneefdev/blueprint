@@ -17,9 +17,11 @@ validated, tested plugins in a declarative DSL; the bot runs them.
 ## Identity & permissions
 
 - Steam OpenID is the only login, for the portal and for anything else. SID64 is the sole identity.
-- Non-host, non-allowlisted SID64 → 403.
-- **Host + allowlist:** talk to the agent, create/edit/disable plugins.
-- **Any teammate:** run existing plugin `/commands`, per-user rate limited.
+- The host assigns each in-game teammate a role **per server**: none, interact or admin. The host
+  is admin everywhere. Pre-roles allowlists migrate to admin on every server.
+- **none:** ignored by the bot; the portal returns 403.
+- **interact:** `@bot` questions and plugin `/commands` (per-user rate limited); can view the portal.
+- **admin:** also confirm new plugins (`@bot yes`, `@bot undo`), enable/disable/restore and import.
 
 ## Chat UX
 
@@ -59,7 +61,7 @@ Plugin {
   trigger:  Command{name,args} | Schedule{every|cron} | CommandAndSchedule | Event{kind,filter}
   conditions: CEL expressions
   state:    declared keys + defaults (KV per plugin per server)
-  actions:  TeamChat | SmartSwitch{binding,on} | SetState | Notify{toast|ntfy}
+  actions:  TeamChat | SmartSwitch{binding,on} | SetState | Notify{toast|phone: ntfy and/or Discord webhook}
   bindings: named slots (entity ids, coordinates) filled per server
   heuristic?: label shown when logic approximates unavailable data
   tests:    fixtures { input events/snapshots → expected actions }   (required)
@@ -101,7 +103,7 @@ SvelteKit, served by the sidecar, exposed through a Cloudflare quick tunnel. URL
 start: bot posts it to team chat + tray; OpenID `return_to` derived from the current URL.
 Pages: pairing (button launches Steam login in Edge on the host PC, FCM register, auto-accept in-game pair
 notifications), plugins (list, diff, history, enable/disable, rollback), logs, harnesses, settings
-(bot name, allowlist, ntfy topic), gallery import, live map (Three.js WebGPU).
+(bot name, per-server team roles, ntfy topic, Discord webhook), gallery import, live map (Three.js WebGPU).
 
 ## v1 scope
 

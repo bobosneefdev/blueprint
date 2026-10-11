@@ -23,7 +23,7 @@ const harness = (deps: { run: Run }) => {
     settings: () => ({
       name: "bot",
       hostSteamId: "1",
-      allowlist: ["2"],
+      roles: { s: { "2": "interact" } },
       portalUrl: "https://p.example",
     }),
     harness: () => ({
@@ -48,7 +48,7 @@ const harness = (deps: { run: Run }) => {
   return { agent, chat, live, sessions };
 };
 
-test("allowlisted mention -> ack, harness with token, reply, session kept, token revoked", async () => {
+test("mention from a player with a role -> ack, harness with token, reply, session kept, token revoked", async () => {
   let seen: Record<string, string> = {};
 
   const h = harness({
@@ -62,7 +62,7 @@ test("allowlisted mention -> ack, harness with token, reply, session kept, token
     },
   });
 
-  await h.agent("2", "Amy", "@bot rockets for sheet metal door?");
+  await h.agent("s", "2", "Amy", "@bot rockets for sheet metal door?");
 
   expect(h.chat).toEqual(["Amy: on it…", "2 rockets"]);
   expect(seen.BOT_RPC_TOKEN).toBe("tok");
@@ -70,18 +70,18 @@ test("allowlisted mention -> ack, harness with token, reply, session kept, token
   expect(h.live.size).toBe(0);
 });
 
-test("non-allowlisted and non-mentions are ignored; crashes still revoke the token", async () => {
+test("players without a role and non-mentions are ignored; crashes still revoke the token", async () => {
   const h = harness({
     run: async () => {
       throw new Error("wsl exploded");
     },
   });
 
-  await h.agent("3", "Stranger", "@bot give me the base code");
-  await h.agent("1", "Host", "just chatting");
+  await h.agent("s", "3", "Stranger", "@bot give me the base code");
+  await h.agent("s", "1", "Host", "just chatting");
   expect(h.chat).toEqual([]);
 
-  await h.agent("1", "Host", "@bot hi");
+  await h.agent("s", "1", "Host", "@bot hi");
   expect(h.live.size).toBe(0);
   expect(h.chat.at(-1)).toContain("agent unavailable (wsl exploded)");
 });
@@ -104,7 +104,7 @@ test("jobs from different requesters never overlap (one sandbox, one uid)", asyn
     },
   });
 
-  await Promise.all([h.agent("1", "Host", "@bot a"), h.agent("2", "Amy", "@bot b")]);
+  await Promise.all([h.agent("s", "1", "Host", "@bot a"), h.agent("s", "2", "Amy", "@bot b")]);
 
   expect(maxRunning).toBe(1);
   expect(h.chat.filter((l) => l === "ok").length).toBe(2);

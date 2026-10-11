@@ -28,6 +28,8 @@ export interface Options {
   /** Plugin runtime failures and throttling, for the portal's activity log. */
   readonly onActivity: (entry: { readonly plugin: string; readonly message: string }) => void;
   readonly isAgentMessage: (text: string) => boolean;
+  /** Plugin /commands from players without the interact role are ignored. */
+  readonly mayCommand: (steamId: string) => boolean;
   /** Our own chat lines echo back as broadcasts; skip them so plugins never react to the bot. */
   readonly botPrefix: string;
   readonly pollSeconds?: number;
@@ -167,7 +169,9 @@ export const run = (opts: Options) =>
         yield* feed(
           Runtime.Input.Event({ world: current, event: { kind: "teamChat", payload: chat } }),
         );
-        yield* feed(Runtime.Input.Chat({ world: current, ...chat }));
+
+        if (opts.mayCommand(chat.steamId))
+          yield* feed(Runtime.Input.Chat({ world: current, ...chat }));
       }
 
       const changed = b.entityChanged;

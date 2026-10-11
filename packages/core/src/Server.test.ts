@@ -92,6 +92,7 @@ test("poll -> diff -> plugin -> team chat, end to end over a websocket", async (
           onWipe: () => Effect.void,
           onActivity: () => {},
           isAgentMessage: () => false,
+          mayCommand: () => true,
           botPrefix: "[bot] ",
           pollSeconds: 0.05,
         });

@@ -36,7 +36,7 @@
     { q: "Is this a cheat? Will it get me banned?", a: "No. It only uses Rust+, Facepunch's official companion API, the same one the Rust+ phone app uses. It never touches the game client, reads memory, or interacts with Easy Anti-Cheat. Everything it knows comes from what Rust+ shows your team." },
     { q: "Why does Windows warn about the installer?", a: "It isn't code-signed yet. Every release is built in public by GitHub Actions from the tagged source, with SHA256 checksums, build provenance you can verify with `gh attestation verify`, and a VirusTotal report linked in the release notes." },
     { q: "What does it need from me?", a: "Windows 10/11, WSL (the installer sets it up), a Steam account to sign in to Rust+ on Facepunch's own page, and one of Claude Code, Codex or Pi for the AI." },
-    { q: "Who can use the AI?", a: "Only you and teammates you allowlist (by Steam account). Anyone on the team can run the slash commands plugins create." },
+    { q: "Who can use the AI?", a: "You choose, per server, from your in-game team: Interact lets a teammate ask the bot and run plugin commands; Admin also lets them add and switch plugins." },
     { q: "Does it send my data anywhere?", a: "No telemetry. The only outbound traffic is Rust+ itself, your chosen AI provider, game-data updates from GitHub, and the update check." },
   ];
 </script>

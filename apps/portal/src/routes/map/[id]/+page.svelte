@@ -14,7 +14,20 @@
       try {
         // Browser-only: three/webgpu touches navigator/GPU globals at import time.
         const { mount, decodeSnapshot } = await import("#lib/map.ts");
-        const view = await mount(canvas, `/map/${data.id}/image.jpg`, data.oceanMargin);
+        // Rust+ can be mid-reconnect; retry the image instead of failing the page.
+        let img = await fetch(`/map/${data.id}/image.jpg`);
+
+        while (!img.ok && !stop) {
+          await new Promise((r) => setTimeout(r, 5000));
+          img = await fetch(`/map/${data.id}/image.jpg`);
+        }
+
+        if (stop) return;
+
+        const url = URL.createObjectURL(await img.blob());
+        const view = await mount(canvas, url, Number(img.headers.get("x-ocean-margin") ?? 0));
+
+        URL.revokeObjectURL(url);
 
         destroy = view.destroy;
 
