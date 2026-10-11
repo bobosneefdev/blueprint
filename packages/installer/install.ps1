@@ -42,7 +42,9 @@ if (-not $wslOk) {
 
 # 3. Download
 Say "Finding the latest release..."
-$release = Invoke-RestMethod "https://api.github.com/repos/$Repo/releases/latest" -Headers @{ "User-Agent" = "blueprint-installer" }
+# Testers can pin a prerelease: $env:BLUEPRINT_TAG = "v0.1.0-beta.1" before running.
+$which = if ($env:BLUEPRINT_TAG) { "tags/$($env:BLUEPRINT_TAG)" } else { "latest" }
+$release = Invoke-RestMethod "https://api.github.com/repos/$Repo/releases/$which" -Headers @{ "User-Agent" = "blueprint-installer" }
 $assets = @{}
 foreach ($a in $release.assets) { $assets[$a.name] = $a.browser_download_url }
 

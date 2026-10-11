@@ -46,6 +46,11 @@ jobs:
           if grep -q REPLACE_WITH_TAURI_SIGNER_PUBLIC_KEY apps/desktop/src-tauri/tauri.conf.json; then
             echo "::error::Set plugins.updater.pubkey in tauri.conf.json (see docs/release-setup.md)"; exit 1
           fi
+      - name: version from tag
+        shell: bash
+        run: |
+          f=apps/desktop/src-tauri/tauri.conf.json
+          jq --arg v "${GITHUB_REF_NAME#v}" '.version = $v' "$f" > v.json && mv v.json "$f"
       - name: portal
         run: cd apps/portal && bun run build
       - name: sidecar
@@ -122,7 +127,9 @@ jobs:
           - VirusTotal: ${{ steps.vt.outputs.report }}
           - The installer is not code-signed yet; Windows SmartScreen will warn. Checksums are in SHA256SUMS.
           EOF
-          gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --notes-file notes.md
+          # vX.Y.Z-beta.N tags are prereleases: /releases/latest (installer + updater) skips them.
+          PRE=$([[ "$GITHUB_REF_NAME" == *-* ]] && echo --prerelease || true)
+          gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --notes-file notes.md $PRE
 
   site:
     # Landing page + docs + gallery index on Cloudflare Pages.
