@@ -42,6 +42,10 @@ export const run = async () => {
         ),
       ),
     ),
+    // A SteamID rounded to a double makes every Rust+ request fail (blank server cards).
+    await step("uint64 SteamID round-trip", async () => {
+      if (!RustPlus.uint64RoundTrips("76561198012345679")) throw new Error("rounded");
+    }),
   ];
 
   process.exit(results.every(Boolean) ? 0 : 1);

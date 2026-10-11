@@ -4,8 +4,24 @@
 // broadcasts as a Stream, and the vendored proto (proto/rustplus.proto, every `required` made
 // `optional` because newer servers omit fields like `queuedPlayers`).
 import { Context, Data, Deferred, Effect, Layer, Queue, Ref, Stream } from "effect";
+import Long from "long";
 import protobuf from "protobufjs";
 import protoText from "../proto/rustplus.proto.ts";
+
+// protobufjs finds `long` via a dynamic require that `bun build --compile` drops; without it
+// uint64 SteamIDs silently round to doubles (…679 becomes …680) and the server rejects requests.
+protobuf.util.Long = Long;
+
+protobuf.configure();
+
+/** For the compiled exe's self-test: true when uint64s keep full precision. */
+export const uint64RoundTrips = (id: string) => {
+  const T = protobuf
+    .parse("syntax='proto2'; message T { optional uint64 id = 1; }")
+    .root.lookupType("T");
+
+  return T.toObject(T.decode(T.encode(T.fromObject({ id })).finish()), { longs: String }).id === id;
+};
 
 export interface ServerCredentials {
   readonly ip: string;

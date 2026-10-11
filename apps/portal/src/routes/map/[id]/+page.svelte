@@ -5,6 +5,8 @@
 
   let failed = $state("");
 
+  let waiting = $state(true);
+
   /** Polls positions every 5s while the page is open; the bot already polls Rust+ centrally. */
   const live = (canvas: HTMLCanvasElement) => {
     let stop = false;
@@ -23,6 +25,8 @@
         }
 
         if (stop) return;
+
+        waiting = false;
 
         const url = URL.createObjectURL(await img.blob());
         const view = await mount(canvas, url, Number(img.headers.get("x-ocean-margin") ?? 0));
@@ -61,5 +65,8 @@
 {#if failed}
   <div role="alert" class="alert alert-error"><span>Map unavailable: {failed}</span></div>
 {:else}
+  {#if waiting}
+    <p class="text-base-content/60 mb-2 text-sm">Waiting for the map from Rust+…</p>
+  {/if}
   <canvas {@attach live} class="bg-base-200 rounded-box aspect-square w-full"></canvas>
 {/if}
