@@ -5,7 +5,8 @@
   "exports": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "bun test --pass-with-no-tests"
+    "test": "bun test --pass-with-no-tests",
+    "gen:proto": "bun -e \"const s=await Bun.file('proto/rustplus.proto').text();await Bun.write('proto/rustplus.proto.ts','// Generated from rustplus.proto by \\`bun run gen:proto\\`; do not edit. Embedded as a string so\\n// compiled builds (bun --compile, Vite) never read the .proto from disk at runtime.\\nexport default '+JSON.stringify(s)+';\\n')\""
   },
   "dependencies": {
     "@blueprint/dsl": "workspace:*",

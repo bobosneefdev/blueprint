@@ -111,6 +111,9 @@
       "name": "@blueprint/installer",
     },
   },
+  "patchedDependencies": {
+    "@liamcottle/push-receiver@0.0.3": "patches/@liamcottle%2Fpush-receiver@0.0.3.patch",
+  },
   "packages": {
     "@blueprint/bot": ["@blueprint/bot@workspace:apps/bot"],
 

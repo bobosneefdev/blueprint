@@ -91,3 +91,11 @@ test("token bucket: burst up to capacity, then paced at the refill rate", () => 
   t = 5000;
   expect(b.take(1)).toBe(0);
 });
+
+test("embedded rustplus.proto matches the vendored file (run `bun run gen:proto`)", async () => {
+  const { default: embedded } = await import("../proto/rustplus.proto.ts");
+
+  expect(embedded).toBe(
+    await Bun.file(fileURLToPath(new URL("../proto/rustplus.proto", import.meta.url))).text(),
+  );
+});

@@ -27,6 +27,8 @@ import * as Notify from "./Notify.ts";
 import * as Sandbox from "./Sandbox.ts";
 import * as SteamLogin from "./SteamLogin.ts";
 
+if (process.argv.includes("--self-test")) await (await import("./SelfTest.ts")).run();
+
 let config = await Config.load();
 
 // Under the tray, exit when the tray does (crash, kill, an installer stopping it). Otherwise this

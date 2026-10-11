@@ -4,8 +4,8 @@
 // broadcasts as a Stream, and the vendored proto (proto/rustplus.proto, every `required` made
 // `optional` because newer servers omit fields like `queuedPlayers`).
 import { Context, Data, Deferred, Effect, Layer, Queue, Ref, Stream } from "effect";
-import { fileURLToPath } from "node:url";
 import protobuf from "protobufjs";
+import protoText from "../proto/rustplus.proto.ts";
 
 export interface ServerCredentials {
   readonly ip: string;
@@ -125,8 +125,6 @@ export interface Interface {
 
 export class Service extends Context.Service<Service, Interface>()("@blueprint/RustPlus") {}
 
-const protoPath = fileURLToPath(new URL("../proto/rustplus.proto", import.meta.url));
-
 const toObjectOptions = { longs: String, enums: Number, bytes: String, defaults: false } as const;
 
 const bodyFor = (kind: RequestKind, body: Parameters<Interface["request"]>[1]) => {
@@ -186,7 +184,7 @@ export const makeBucket = (capacity: number, perSecond: number, now = () => Date
 export const make = (creds: ServerCredentials, opts?: { readonly timeoutMs?: number }) =>
   Effect.gen(function* () {
     const root = yield* Effect.tryPromise({
-      try: () => protobuf.load(protoPath),
+      try: async () => protobuf.parse(protoText).root,
       catch: (e) => new ConnectError({ cause: `proto: ${String(e)}` }),
     });
 

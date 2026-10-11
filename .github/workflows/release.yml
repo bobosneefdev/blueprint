@@ -59,6 +59,15 @@ jobs:
           cd apps/bot && bun run build
           mkdir -p ../desktop/src-tauri/binaries
           cp dist/blueprint-bot.exe ../desktop/src-tauri/binaries/blueprint-bot-x86_64-pc-windows-msvc.exe
+      - name: sidecar self-test (from outside the checkout, like a player's PC)
+        shell: pwsh
+        run: |
+          $t = Join-Path $env:RUNNER_TEMP "selftest"
+          New-Item -ItemType Directory -Force $t | Out-Null
+          Copy-Item apps/bot/dist/blueprint-bot.exe $t
+          Push-Location $t
+          & .\blueprint-bot.exe --self-test
+          if ($LASTEXITCODE -ne 0) { throw "sidecar self-test failed" }
       - name: bundle MinGit (git for the plugin workspace; most players have none)
         shell: pwsh
         run: |

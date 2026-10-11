@@ -19,6 +19,7 @@ declare module "@liamcottle/push-receiver/src/android/fcm" {
 
 declare module "@liamcottle/push-receiver/src/client" {
   export default class PushReceiverClient {
+    static init(): Promise<void>;
     constructor(androidId: string, securityToken: string, persistentIds: string[]);
     on(
       event: "ON_DATA_RECEIVED",
@@ -26,5 +27,11 @@ declare module "@liamcottle/push-receiver/src/client" {
     ): void;
     connect(): Promise<void>;
     destroy(): void;
+  }
+}
+
+declare module "@liamcottle/push-receiver/src/parser" {
+  export default class PushReceiverParser {
+    static init(): Promise<void>;
   }
 }

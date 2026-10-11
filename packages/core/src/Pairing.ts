@@ -10,6 +10,7 @@
 /// <reference path="./push-receiver.d.ts" />
 import AndroidFCM from "@liamcottle/push-receiver/src/android/fcm";
 import PushReceiverClient from "@liamcottle/push-receiver/src/client";
+import PushReceiverParser from "@liamcottle/push-receiver/src/parser";
 import { Option, Schema } from "effect";
 
 const COMPANION = "https://companion-rust.facepunch.com";
@@ -102,6 +103,12 @@ const decodeBody = Schema.decodeUnknownOption(Schema.fromJsonString(PairNotifica
 /** FCM data message -> pairing notification, if it is one. */
 export const parseNotification = (appData: ReadonlyArray<{ key: string; value: string }>) =>
   Option.getOrUndefined(decodeBody(appData.find((d) => d.key === "body")?.value ?? ""));
+
+/** Loads push-receiver's bundled protos (what listen() needs); a self-test for packaged builds. */
+export const loadProtos = async () => {
+  await PushReceiverClient.init();
+  await PushReceiverParser.init();
+};
 
 /** Long-lived FCM listener. Returns a stop function. */
 export const listen = (
