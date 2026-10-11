@@ -1,37 +1,107 @@
 @import "tailwindcss";
+@import "@fontsource-variable/geist";
 @plugin "daisyui" {
   themes: false;
 }
 
-/* Rust-flavoured dark theme: oxidised orange on gunmetal. */
+/* "Blueprint": the CS2 USP-S skin. Royal-blue drafting paper ruled in bright cyan,
+   gunmetal slide, slate-navy backdrop. */
 @plugin "daisyui/theme" {
-  name: "rust";
+  name: "blueprint";
   default: true;
   color-scheme: dark;
-  --color-base-100: oklch(20% 0.01 60);
-  --color-base-200: oklch(24% 0.012 60);
-  --color-base-300: oklch(30% 0.014 60);
-  --color-base-content: oklch(92% 0.01 70);
-  --color-primary: oklch(62% 0.18 38);
-  --color-primary-content: oklch(98% 0.01 70);
-  --color-secondary: oklch(72% 0.12 75);
-  --color-secondary-content: oklch(20% 0.02 60);
-  --color-accent: oklch(70% 0.15 150);
-  --color-accent-content: oklch(18% 0.02 150);
-  --color-neutral: oklch(28% 0.012 60);
-  --color-neutral-content: oklch(90% 0.01 70);
-  --color-info: oklch(70% 0.12 230);
-  --color-info-content: oklch(18% 0.02 230);
-  --color-success: oklch(70% 0.15 150);
-  --color-success-content: oklch(18% 0.02 150);
-  --color-warning: oklch(80% 0.15 85);
-  --color-warning-content: oklch(20% 0.02 85);
-  --color-error: oklch(63% 0.2 28);
-  --color-error-content: oklch(98% 0.01 28);
-  --radius-selector: 0.25rem;
-  --radius-field: 0.25rem;
-  --radius-box: 0.5rem;
+  --color-base-100: oklch(23% 0.025 250);
+  --color-base-200: oklch(26% 0.006 260);
+  --color-base-300: oklch(33% 0.008 260);
+  --color-base-content: oklch(94% 0.01 250);
+  --color-primary: oklch(52% 0.21 264);
+  --color-primary-content: oklch(98% 0.01 250);
+  --color-secondary: oklch(74% 0.13 240);
+  --color-secondary-content: oklch(20% 0.05 255);
+  --color-accent: oklch(82% 0.1 225);
+  --color-accent-content: oklch(20% 0.05 255);
+  --color-neutral: oklch(24% 0.008 260);
+  --color-neutral-content: oklch(92% 0.01 250);
+  --color-info: oklch(74% 0.13 240);
+  --color-info-content: oklch(20% 0.05 255);
+  --color-success: oklch(76% 0.14 165);
+  --color-success-content: oklch(20% 0.04 165);
+  --color-warning: oklch(83% 0.14 85);
+  --color-warning-content: oklch(22% 0.04 85);
+  --color-error: oklch(66% 0.19 25);
+  --color-error-content: oklch(98% 0.01 25);
+  --radius-selector: 0.125rem;
+  --radius-field: 0.125rem;
+  --radius-box: 0.75rem;
   --border: 1px;
-  --depth: 1;
-  --noise: 1;
+  --depth: 0;
+  --noise: 0;
+}
+
+@theme {
+  --font-sans: "Geist Variable", "Segoe UI", system-ui, sans-serif;
+  /* Bright drafting line, as on the skin's edges and grid. */
+  --color-line: oklch(70% 0.16 250);
+}
+
+@layer base {
+  body {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2 {
+    letter-spacing: -0.03em;
+  }
+
+  h3 {
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  /* Panels are the gunmetal slide: dark grey, outlined in blueprint blue. */
+  .card.bg-base-200,
+  .collapse.bg-base-200,
+  .list.bg-base-200 {
+    background-color: oklch(100% 0 0 / 0.03);
+    border: 1px solid oklch(100% 0 0 / 0.08);
+    box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.05);
+    transition: border-color 0.2s;
+  }
+
+  .collapse.bg-base-200:is([open], :hover) {
+    border-color: oklch(70% 0.16 250 / 0.5);
+  }
+
+  .collapse .collapse-title::after {
+    color: var(--color-secondary);
+  }
+
+  .card.bg-base-200:hover {
+    border-color: oklch(70% 0.16 250 / 0.5);
+  }
+
+  /* In-game Rust team chat: bold condensed white with a hard shadow over the world. */
+  .rust-chat {
+    background:
+      radial-gradient(120% 80% at 30% 20%, oklch(48% 0.008 250), transparent 70%),
+      oklch(36% 0.008 250);
+    border: 1px solid var(--color-line);
+    color: white;
+    font-family: "Roboto Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.25;
+    text-shadow: 1px 1px 2px oklch(0% 0 0 / 0.8);
+  }
+
+  header.slide {
+    background: linear-gradient(oklch(27% 0.006 260), oklch(22% 0.006 260));
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .btn-primary {
+    border-color: var(--color-line);
+  }
 }

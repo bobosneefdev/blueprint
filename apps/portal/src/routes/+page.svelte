@@ -4,7 +4,7 @@
   let { data }: PageProps = $props();
 </script>
 
-<h1 class="text-3xl font-bold">Servers</h1>
+<h1 class="text-3xl font-semibold">Servers</h1>
 
 {#if data.servers.length === 0}
   <div class="alert">

@@ -72,8 +72,8 @@
 <main class="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-12 md:px-8 md:py-16">
   <header class="flex flex-col gap-3">
     <span class="badge badge-outline">Setup · runs on this PC only</span>
-    <h1 class="text-4xl leading-tight font-bold text-balance">
-      Three steps and your team chat <span class="text-primary">takes requests.</span>
+    <h1 class="text-4xl leading-tight font-semibold text-balance">
+      Three steps and your team chat <span class="text-secondary">takes requests.</span>
     </h1>
   </header>
 

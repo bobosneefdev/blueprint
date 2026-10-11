@@ -7,7 +7,7 @@
 </script>
 
 <a class="link mb-4 inline-block" href="/plugins">← Plugins</a>
-<h1 class="mb-4 text-2xl font-bold">
+<h1 class="mb-4 text-2xl font-semibold">
   {data.name} <code class="text-base-content/60 text-base">{data.commit.slice(0, 7)}</code>
 </h1>
 

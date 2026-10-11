@@ -55,7 +55,7 @@
 </script>
 
 <div class="mb-4 flex flex-col gap-1">
-  <h1 class="text-2xl font-bold">{data.name}</h1>
+  <h1 class="text-2xl font-semibold">{data.name}</h1>
   <p class="text-base-content/60 text-sm">
     <span class="text-success">●</span> online · <span class="text-error">●</span> dead ·
     <span class="text-base-content/40">●</span> offline · larger dots are cargo, heli, chinook, crates

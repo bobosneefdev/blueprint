@@ -13,31 +13,32 @@
     setTimeout(() => (copied = false), 1500);
   };
 
+  // The bot speaks through the host's Rust+ account, so its lines carry the host's name.
   const chat = [
-    { who: "you", text: "@bot ping us when cargo spawns, with the grid" },
-    { who: "bot", text: "on it…" },
-    { who: "bot", text: "@bot yes 4821 to activate: <portal link>" },
-    { who: "bot", text: "new cargo-alert [chat]" },
-    { who: "you", text: "@bot yes 4821" },
-    { who: "bot", text: "cargo-alert is live" },
-    { who: "bot", text: "Cargo Ship spawned at G3" },
+    { who: "rook", text: "@bot ping us when cargo spawns, with the grid" },
+    { who: "bobo", text: "[bot] on it…" },
+    { who: "bobo", text: "[bot] say @bot yes 4821 to activate cargo-alert" },
+    { who: "rook", text: "@bot yes 4821" },
+    { who: "bobo", text: "[bot] cargo-alert is live" },
+    { who: "bobo", text: "[bot] Cargo Ship spawned at G3" },
   ];
 
-  const features = [
-    { title: "Ask for features in chat", body: "Type what you want in team chat. The AI writes a small plugin, tests it on your server's recent data, and asks you to confirm." },
-    { title: "Honest about limits", body: "Rust+ can't see inventories, enemies or AFK. When you ask for those, it says so and offers the closest thing it can actually do." },
-    { title: "Game data built in", body: "Raid costs, crafting, recycling and loot from the weekly-updated rust-items-json. Ask \"@bot rockets for a stone wall?\"" },
-    { title: "Smart switches & alarms", body: "Lights at night, alarm relays to chat and phone, turrets off when a teammate logs in. Your paired devices, your rules." },
-    { title: "Runs on your PC", body: "Self-hosted. Bring Claude Code, Codex or Pi. The AI runs in a locked-down sandbox that can't see your files." },
-    { title: "Undo anything", body: "Every plugin change is versioned. @bot undo in chat, or restore any version from the web portal." },
+  const pillars = [
+    { title: "Just ask", body: "Describe it in team chat. The AI builds it, tests it, and waits for your yes." },
+    { title: "Any server", body: "No server mods or admin. If Rust+ works there, Blueprint does." },
+    { title: "Ban-safe", body: "Only Facepunch's official Rust+ API. Never touches the game or anti-cheat." },
   ];
 
   const faq = [
-    { q: "Is this a cheat? Will it get me banned?", a: "No. It only uses Rust+, Facepunch's official companion API, the same one the Rust+ phone app uses. It never touches the game client, reads memory, or interacts with Easy Anti-Cheat. Everything it knows comes from what Rust+ shows your team." },
-    { q: "Why does Windows warn about the installer?", a: "It isn't code-signed yet. Every release is built in public by GitHub Actions from the tagged source, with SHA256 checksums, build provenance you can verify with `gh attestation verify`, and a VirusTotal report linked in the release notes." },
-    { q: "What does it need from me?", a: "Windows 10/11, WSL (the installer sets it up), a Steam account to sign in to Rust+ on Facepunch's own page, and one of Claude Code, Codex or Pi for the AI." },
-    { q: "Who can use the AI?", a: "You choose, per server, from your in-game team: Interact lets a teammate ask the bot and run plugin commands; Admin also lets them add and switch plugins." },
-    { q: "Does it send my data anywhere?", a: "No telemetry. The only outbound traffic is Rust+ itself, your chosen AI provider, game-data updates from GitHub, and the update check." },
+    { q: "Can it get me banned?", a: "No. It only talks to Rust+, Facepunch's official companion API, the same one the phone app uses. It never touches the game client, reads memory, or goes near Easy Anti-Cheat." },
+    { q: "Is it free?", a: "Yes. Blueprint is open source under AGPL-3.0. The AI runs on your own Claude Code, Codex or Pi subscription, so there's nothing extra to pay us." },
+    { q: "What do I need?", a: "A Windows 10 or 11 PC, a Steam account to sign in to Rust+, and one of Claude Code, Codex or Pi. The installer sets up WSL for you." },
+    { q: "Does my PC need to stay on?", a: "Yes. Blueprint runs on your machine, so plugins only fire while it's running. Rust+ keeps working on your phone either way." },
+    { q: "Who on my team can use it?", a: "You decide, per server. Interact lets a teammate ask the bot and run plugin commands. Admin also lets them add and switch plugins." },
+    { q: "What can't it do?", a: "Rust+ can't see inventories, enemy players or who's AFK at a keyboard. Ask for one of those and it tells you, then offers the closest thing it can actually do." },
+    { q: "Is my data safe?", a: "There's no telemetry. The AI works in a locked-down sandbox that can't see your files, and the only traffic is Rust+, your AI provider, game-data updates and the update check." },
+    { q: "What if a plugin goes wrong?", a: "Every change is versioned. Say @bot undo in team chat, or restore any earlier version from the web portal." },
+    { q: "Why does Windows warn about the installer?", a: "It isn't code-signed yet. Every release is built in public by GitHub Actions, with SHA256 checksums, verifiable build provenance and a VirusTotal report in the release notes." },
   ];
 </script>
 
@@ -52,14 +53,10 @@
 <main class="mx-auto flex max-w-6xl flex-col gap-24 px-4 py-12 md:px-8 md:py-20">
   <section class="grid items-center gap-10 lg:grid-cols-2">
     <div class="flex min-w-0 flex-col gap-6">
-      <span class="badge badge-outline">Open source · Rust+ · Windows</span>
-      <h1 class="text-4xl leading-tight font-bold text-balance md:text-5xl">
-        Type a feature into team chat. <span class="text-primary">It just exists.</span>
+      <h1 class="text-4xl leading-tight font-semibold text-balance md:text-5xl">
+        Type a feature into team chat. <span class="text-secondary">It just exists.</span>
       </h1>
-      <p class="text-base-content/75 max-w-prose text-lg">
-        Blueprint is a Rust+ team bot you program by asking. An AI writes the plugin, tests it
-        against your server, and runs it once you confirm.
-      </p>
+      <p class="text-base-content/75 max-w-prose text-lg">A Rust+ team bot you program by asking.</p>
       <div class="flex flex-col gap-2">
         <div class="join w-full min-w-0">
           <code class="join-item bg-base-200 border-base-300 min-w-0 flex-1 overflow-x-auto border px-3 py-3 text-sm whitespace-nowrap">{install}</code>
@@ -68,60 +65,54 @@
           </button>
         </div>
         <p class="text-base-content/60 text-sm">
-          Paste into PowerShell. <a class="link" href="https://github.com/bobosneefdev/blueprint/blob/main/packages/installer/install.ps1">Read the script first</a>, it's short.
+          Free and open source. Paste into PowerShell, or <a class="link" href="https://github.com/bobosneefdev/blueprint/blob/main/packages/installer/install.ps1">read the script</a>.
         </p>
       </div>
     </div>
 
-    <div class="mockup-window bg-base-200 border-base-300 min-w-0 border">
-      <div class="flex flex-col gap-1 p-4 font-mono text-sm break-words" aria-label="Example team chat">
-        {#each chat as line, i (i)}
-          <p>
-            <span class={line.who === "bot" ? "text-primary" : "text-secondary"}>{line.who === "bot" ? "[bot]" : "You"}:</span>
-            {line.text}
-          </p>
-        {/each}
-      </div>
+    <div class="rust-chat rounded-box flex min-w-0 flex-col gap-4 p-5" aria-label="Example team chat">
+      {#each chat as line, i (i)}
+        <p class="flex items-start gap-3">
+          <img class="size-9 shrink-0 rounded-sm" src="/avatar-{line.who}.png" alt="" width="36" height="36" />
+
+          <span class="min-w-0 pt-1.5 break-words">
+            <span class="text-[#a8d34a]">[Team]</span>
+            <span class="text-[#5ba8ff]">{line.who}</span>: {line.text}
+          </span>
+        </p>
+      {/each}
     </div>
   </section>
 
-  <section class="flex flex-col gap-8">
-    <h2 class="text-3xl font-bold">What it does</h2>
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {#each features as f (f.title)}
-        <div class="card bg-base-200">
-          <div class="card-body">
-            <h3 class="card-title text-lg">{f.title}</h3>
-            <p class="text-base-content/75">{f.body}</p>
-          </div>
+  <section class="grid gap-4 md:grid-cols-3">
+    {#each pillars as p, i (p.title)}
+      <div class="card bg-base-200">
+        <div class="card-body gap-3 p-7">
+          <span class="text-secondary font-mono text-xs">0{i + 1}</span>
+          <h2 class="text-xl font-semibold">{p.title}</h2>
+          <p class="text-base-content/60 leading-relaxed">{p.body}</p>
         </div>
-      {/each}
-    </div>
+      </div>
+    {/each}
   </section>
 
-  <section class="flex flex-col gap-8" id="plugins">
-    <div class="flex flex-col gap-2">
-      <h2 class="text-3xl font-bold">Starter plugins</h2>
-      <p class="text-base-content/70">Included out of the box. Everything else, just ask.</p>
-    </div>
-    <ul class="list bg-base-200 rounded-box">
+  <section class="flex flex-col items-center gap-6 text-center" id="plugins">
+    <h2 class="text-3xl font-semibold">Ships with the essentials</h2>
+    <div class="flex max-w-3xl flex-wrap justify-center gap-2">
       {#each data.plugins as p (p.name)}
-        <li class="list-row items-center">
-          <span class="font-mono font-semibold break-all">{p.name}</span>
-          <span class="text-base-content/75">{p.description}</span>
-          <span class="badge badge-sm">{p.trigger}</span>
-        </li>
+        <span class="badge badge-lg border-secondary/30 bg-secondary/10 text-secondary font-mono" title={p.description}>{p.name}</span>
       {/each}
-    </ul>
+    </div>
+    <p class="text-base-content/60">Want something else? Ask for it.</p>
   </section>
 
-  <section class="flex flex-col gap-6" id="faq">
-    <h2 class="text-3xl font-bold">FAQ</h2>
+  <section class="mx-auto flex w-full max-w-3xl flex-col gap-8" id="faq">
+    <h2 class="text-center text-3xl font-semibold">Questions</h2>
     <div class="flex flex-col gap-2">
       {#each faq as item (item.q)}
-        <details class="collapse collapse-arrow bg-base-200">
-          <summary class="collapse-title font-semibold">{item.q}</summary>
-          <div class="collapse-content text-base-content/80">{item.a}</div>
+        <details class="collapse collapse-plus bg-base-200" name="faq">
+          <summary class="collapse-title font-medium">{item.q}</summary>
+          <div class="collapse-content text-base-content/65 leading-relaxed">{item.a}</div>
         </details>
       {/each}
     </div>

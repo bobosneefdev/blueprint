@@ -5,7 +5,7 @@
   let { data }: PageProps = $props();
 </script>
 
-<h1 class="text-3xl font-bold">Plugins</h1>
+<h1 class="text-3xl font-semibold">Plugins</h1>
 
 {#if !data.isAdmin}
   <div role="alert" class="alert"><span>Only the host or an admin can turn plugins on/off or restore versions.</span></div>

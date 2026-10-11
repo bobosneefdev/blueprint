@@ -23,7 +23,7 @@
     models.find((m) => m.id === model) ?? models.find((m) => m.isDefault);
 </script>
 
-<h1 class="text-3xl font-bold">Settings</h1>
+<h1 class="text-3xl font-semibold">Settings</h1>
 
 {#if !data.isHost}
   <div role="alert" class="alert mb-6"><span>Only the host can change settings.</span></div>

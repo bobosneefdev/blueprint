@@ -25,9 +25,9 @@
 {#if bare}
   {@render children()}
 {:else}
-  <header class="border-base-300 border-b">
+  <header class="slide">
     <nav class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 md:px-8">
-      <a href="/" class="flex items-center gap-2 font-bold">
+      <a href="/" class="flex items-center gap-2 font-semibold">
         <img src={favicon} alt="" class="size-7" />
         Blueprint
       </a>
