@@ -33,13 +33,9 @@
     "apps/portal": {
       "name": "@blueprint/portal",
       "version": "0.0.1",
-      "dependencies": {
+      "devDependencies": {
         "@blueprint/core": "workspace:*",
         "@blueprint/dsl": "workspace:*",
-        "effect": "4.0.2",
-        "three": "0.186.1",
-      },
-      "devDependencies": {
         "@sveltejs/adapter-node": "^6.0.0",
         "@sveltejs/kit": "^3.0.0",
         "@sveltejs/vite-plugin-svelte": "^7.2.0",
@@ -49,9 +45,11 @@
         "@types/three": "^0.186.0",
         "bits-ui": "2.19.5",
         "daisyui": "5.7.47",
+        "effect": "4.0.2",
         "svelte": "^5.57.1",
         "svelte-check": "^4.6.0",
         "tailwindcss": "^4.3.0",
+        "three": "0.186.1",
         "typescript": "6.0.3",
         "vite": "^8.3.0",
       },

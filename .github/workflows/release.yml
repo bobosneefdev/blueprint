@@ -53,6 +53,12 @@ jobs:
           jq --arg v "${GITHUB_REF_NAME#v}" '.version = $v' "$f" > v.json && mv v.json "$f"
       - name: portal
         run: cd apps/portal && bun run build
+      - name: portal is self-contained (the installer ships no node_modules)
+        shell: bash
+        run: |
+          bare=$(grep -rhoE '^import[^;]*from ?"[^./"][^"]*"|import\("[^./"][^"]*"\)' apps/portal/build/server apps/portal/build/*.js \
+            | grep -oE '"[^"]+"' | grep -v '"node:' | sort -u || true)
+          if [ -n "$bare" ]; then echo "::error::portal build imports packages at runtime: $bare"; exit 1; fi
       - name: sidecar
         shell: bash
         run: |
