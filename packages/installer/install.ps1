@@ -75,6 +75,10 @@ Say "Checksums OK ($($release.tag_name))."
 # 5. Install
 Move-Item -Force (Join-Path $tmp "blueprint-agent.tar.gz") (Join-Path $Home_ "blueprint-agent.tar.gz")
 Say "Installing the app..."
+# An update over a running copy would leave the old exe locked (silently not replaced) and the
+# old bot holding the portal port. Stop it first; it restarts below.
+Get-Process blueprint, blueprint-bot -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Sleep 2
 Start-Process (Join-Path $tmp "blueprint-setup.exe") -ArgumentList "/S" -Wait
 Remove-Item -Recurse -Force $tmp
 

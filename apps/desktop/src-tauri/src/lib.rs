@@ -30,6 +30,7 @@ fn spawn_sidecar(app: &AppHandle) {
     let cmd = match app.shell().sidecar("blueprint-bot") {
         Ok(c) => c
             .env("BLUEPRINT_PORTAL", &portal_dir)
+            .env("BLUEPRINT_TRAY_PID", std::process::id().to_string())
             .env("BLUEPRINT_GIT", portal_dir.with_file_name("mingit").join("cmd").join("git.exe")),
         Err(e) => {
             eprintln!("sidecar missing: {e}");

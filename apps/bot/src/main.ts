@@ -29,6 +29,19 @@ import * as SteamLogin from "./SteamLogin.ts";
 
 let config = await Config.load();
 
+// Under the tray, exit when the tray does (crash, kill, an installer stopping it). Otherwise this
+// orphan keeps the ports and serves stale code after an update. Signal 0 only tests existence.
+const trayPid = Number(process.env.BLUEPRINT_TRAY_PID);
+
+if (trayPid > 0)
+  setInterval(() => {
+    try {
+      process.kill(trayPid, 0);
+    } catch {
+      process.exit(0);
+    }
+  }, 2000).unref();
+
 const home = Config.dataDir();
 
 const db = Db.open(join(home, "blueprint.db"));
