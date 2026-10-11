@@ -44,9 +44,17 @@ const edgePath = () =>
 /** Page-side hook: Facepunch's login page calls ReactNativeWebView.postMessage(JSON). */
 const HOOK = `window.ReactNativeWebView = { postMessage: (m) => window.__rustplusAuth(m) };`;
 
-const waitForPage = async (port: number) => {
-  for (let i = 0; i < 100; i++) {
+/**
+ * Edge picks a free debugging port (--remote-debugging-port=0) and writes it to DevToolsActivePort
+ * in the profile. A cold first launch on a busy PC can take 10s+ before it listens, so wait on the
+ * clock, not on a fixed number of attempts.
+ */
+const waitForPage = async (profile: string, timeoutMs = 60_000) => {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
     try {
+      const port = (await Bun.file(join(profile, "DevToolsActivePort")).text()).split("\n")[0];
       const res = await fetch(`http://127.0.0.1:${port}/json/list`);
       const page = decodeTargets(await res.text()).find((t) => t.type === "page");
 
@@ -55,7 +63,7 @@ const waitForPage = async (port: number) => {
       // browser still starting
     }
 
-    await Bun.sleep(100);
+    await Bun.sleep(250);
   }
 
   throw new Error("browser did not start");
@@ -65,13 +73,12 @@ export const signIn = async (): Promise<{
   readonly steamId: string;
   readonly authToken: string;
 }> => {
-  const port = 9300 + Math.floor(Math.random() * 500);
   const profile = mkdtempSync(join(tmpdir(), "blueprint-login-"));
 
   const browser = Bun.spawn(
     [
       edgePath(),
-      `--remote-debugging-port=${port}`,
+      "--remote-debugging-port=0",
       `--user-data-dir=${profile}`,
       "--no-first-run",
       "about:blank",
@@ -80,7 +87,7 @@ export const signIn = async (): Promise<{
   );
 
   try {
-    const ws = new WebSocket(await waitForPage(port));
+    const ws = new WebSocket(await waitForPage(profile));
     let id = 0;
 
     const send = (method: string, params: Record<string, string> = {}) =>
