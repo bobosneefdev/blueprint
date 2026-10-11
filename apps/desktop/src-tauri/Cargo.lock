@@ -305,6 +305,7 @@ dependencies = [
 name = "blueprint"
 version = "0.1.0"
 dependencies = [
+ "dunce",
  "serde_json",
  "tauri",
  "tauri-build",

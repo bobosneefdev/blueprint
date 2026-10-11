@@ -20,10 +20,11 @@ struct Sidecar {
 }
 
 fn spawn_sidecar(app: &AppHandle) {
+    // resource_dir() is a verbatim \\?\ path on Windows, which Bun's module loader can't open.
     let portal_dir = app
         .path()
         .resource_dir()
-        .map(|d| d.join("portal"))
+        .map(|d| dunce::simplified(&d).join("portal"))
         .unwrap_or_default();
 
     let cmd = match app.shell().sidecar("blueprint-bot") {
@@ -50,9 +51,7 @@ fn spawn_sidecar(app: &AppHandle) {
     tauri::async_runtime::spawn(async move {
         while let Some(event) = rx.recv().await {
             match event {
-                CommandEvent::Stdout(line) | CommandEvent::Stderr(line) => {
-                    print!("{}", String::from_utf8_lossy(&line));
-                }
+                CommandEvent::Stdout(line) | CommandEvent::Stderr(line) => log(&app, &line),
                 CommandEvent::Terminated(_) => break,
                 _ => {}
             }
@@ -64,6 +63,19 @@ fn spawn_sidecar(app: &AppHandle) {
             spawn_sidecar(&app);
         }
     });
+}
+
+/// The tray has no console; sidecar output goes to %LOCALAPPDATA%\blueprint\blueprint.log.
+// ponytail: unbounded append; rotate if logs get large.
+fn log(app: &AppHandle, line: &[u8]) {
+    use std::io::Write;
+
+    let Ok(dir) = app.path().local_data_dir() else { return };
+    let path = dir.join("blueprint").join("blueprint.log");
+
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
+        let _ = f.write_all(line);
+    }
 }
 
 fn stop_sidecar(app: &AppHandle) {

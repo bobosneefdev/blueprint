@@ -9,6 +9,8 @@ and the sandboxed `bot` CLI reaching the real bot RPC. Still needs a person: §2
 window + in-game pairing), §4 (live agent in chat, needs your harness credential via /harness),
 §5 (tray + NSIS installer), §6 (toast/phone).
 
+If anything misbehaves, the bot's output is in `%LOCALAPPDATA%\blueprint\blueprint.log`.
+
 ## 0. Build artifacts locally (until the release workflow has run once)
 
 ```powershell
