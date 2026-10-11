@@ -209,6 +209,11 @@ attach({
 // Packaged: Tauri passes the bundled portal dir. Dev: the sibling app's build output.
 const portalDir = process.env.BLUEPRINT_PORTAL ?? join(import.meta.dir, "../../portal/build");
 
+// adapter-node assumes https unless told otherwise, which breaks SvelteKit's same-origin form
+// check on http://127.0.0.1. Read the protocol from a header we set ourselves (never the client's):
+// https behind the Cloudflare tunnel, http on loopback. Must be set before the handler loads.
+process.env.PROTOCOL_HEADER = "x-blueprint-proto";
+
 const { handler } = await import(join(portalDir, "handler.js"));
 
 // Another blueprint (or anything) on our ports means a second copy; exit with a clear message
@@ -221,7 +226,10 @@ const portInUse = (port: number) => (e: NodeJS.ErrnoException) => {
   process.exit(1);
 };
 
-createServer(handler)
+createServer((req, res) => {
+  req.headers["x-blueprint-proto"] = req.headers["cf-connecting-ip"] ? "https" : "http";
+  handler(req, res);
+})
   .on("error", portInUse(config.portalPort))
   .listen(config.portalPort, "127.0.0.1");
 
