@@ -56,6 +56,6 @@
   </div>
 {/if}
 
-{#if data.canChat && data.world !== undefined}
+{#if data.canChat}
   <Chat id={data.id} />
 {/if}
