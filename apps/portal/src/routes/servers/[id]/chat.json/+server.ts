@@ -36,7 +36,15 @@ export const POST = async ({ params, locals, request }) => {
   const name = s?.world?.team.find((m) => m.steamId === locals.sid64)?.name ?? "web";
 
   // Rust+ caps messages at 128 chars; the sink trims after adding the bot prefix.
-  await b.sendTeamChat(params.id, `${name}: ${text}`);
+  const sent = await b.sendTeamChat(params.id, `${name}: ${text}`).then(
+    () => "",
+    (e: { error?: string; message?: string }) =>
+      e.error === "no_team"
+        ? "Your in-game character isn't in a team, so there's no team chat."
+        : `Rust+ refused the message: ${e.error ?? e.message ?? "unknown error"}`,
+  );
+
+  if (sent !== "") error(502, sent);
 
   return new Response(null, { status: 204 });
 };

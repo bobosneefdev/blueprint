@@ -11,6 +11,8 @@
 
   let failed = $state("");
 
+  let sendFailed = $state("");
+
   const load = async () => {
     const res = await fetch(`/servers/${id}/chat.json`).catch(() => undefined);
 
@@ -47,6 +49,7 @@
     if (text.trim() === "") return;
 
     sending = true;
+    sendFailed = "";
 
     const res = await fetch(`/servers/${id}/chat.json`, {
       method: "POST",
@@ -59,7 +62,9 @@
     if (res?.ok) {
       text = "";
       await load();
-    } else failed = "Couldn't send. Try again.";
+    } else
+      sendFailed =
+        (await res?.json().catch(() => undefined))?.message ?? "Couldn't send. Try again.";
   };
 
   const at = (t: number) =>
@@ -80,8 +85,8 @@
         <p class="text-base-content/60">No messages yet.</p>
       {/each}
     </div>
-    {#if failed}
-      <p role="alert" class="text-error text-sm">{failed}</p>
+    {#if failed || sendFailed}
+      <p role="alert" class="text-error text-sm">{sendFailed || failed}</p>
     {/if}
     <form onsubmit={send} class="join w-full">
       <input

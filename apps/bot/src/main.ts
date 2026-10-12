@@ -242,7 +242,11 @@ attach({
     return p;
   },
   sendTeamChat: async (id, line) => {
-    await chatSinks.get(id)?.(line);
+    const sink = chatSinks.get(id);
+
+    if (sink === undefined) throw new Error("Not connected");
+
+    await sink(line);
     chatCache.delete(id);
   },
   pairing: () => ({ signedIn: config.rustplus !== undefined, hostSteamId: config.hostSteamId }),
@@ -511,10 +515,8 @@ const runServer = (s: Db.ServerRow) =>
 
       chatSinks.set(s.id, (line) =>
         Effect.runPromise(
-          Effect.ignore(
-            rp.request("sendTeamMessage", { message: `${BOT_PREFIX}${line}`.slice(0, 128) }),
-          ),
-        ),
+          rp.request("sendTeamMessage", { message: `${BOT_PREFIX}${line}`.slice(0, 128) }),
+        ).then(() => undefined),
       );
 
       chatFetchers.set(s.id, () =>
