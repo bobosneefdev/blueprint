@@ -142,9 +142,8 @@ jobs:
           - VirusTotal: ${{ steps.vt.outputs.report }}
           - The installer is not code-signed yet; Windows SmartScreen will warn. Checksums are in SHA256SUMS.
           EOF
-          # vX.Y.Z-beta.N tags are prereleases: /releases/latest (installer + updater) skips them.
-          PRE=$([[ "$GITHUB_REF_NAME" == *-* ]] && echo --prerelease || true)
-          gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --notes-file notes.md $PRE
+          # Every tag (betas included) is Latest: installer + updater follow /releases/latest.
+          gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --notes-file notes.md --latest
 
   site:
     # Landing page + docs + gallery index on Cloudflare Pages.
