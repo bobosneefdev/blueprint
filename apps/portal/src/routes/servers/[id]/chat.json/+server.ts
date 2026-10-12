@@ -41,7 +41,9 @@ export const POST = async ({ params, locals, request }) => {
     (e: { error?: string; message?: string }) =>
       e.error === "no_team"
         ? "Your in-game character isn't in a team, so there's no team chat."
-        : `Rust+ refused the message: ${e.error ?? e.message ?? "unknown error"}`,
+        : e.error === "message_not_sent"
+          ? "The Rust server rejected the message. It does this when your character is chat-muted, server chat is off, or a server plugin blocks chat from the Rust+ app."
+          : `Rust+ refused the message: ${e.error ?? e.message ?? "unknown error"}`,
   );
 
   if (sent !== "") error(502, sent);

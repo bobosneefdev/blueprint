@@ -373,7 +373,14 @@ export interface Login {
 
 let current: (Login & { readonly answer?: (code: string) => void }) | undefined;
 
-export const login = (): Login | undefined => current;
+/** Without `answer`: this goes into page data, and functions can't be serialized. */
+export const login = (): Login | undefined => {
+  if (current === undefined) return undefined;
+
+  const { answer: _, ...l } = current;
+
+  return l;
+};
 
 const set = (patch: Partial<Login>) => {
   if (current) current = { ...current, ...patch };
