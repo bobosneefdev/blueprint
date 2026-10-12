@@ -32,6 +32,18 @@ export interface Bot {
   readonly mapImage: (
     serverId: string,
   ) => Promise<{ readonly jpg: Uint8Array; readonly oceanMargin: number } | undefined>;
+  /** Recent team chat, oldest first; undefined if not connected. */
+  readonly teamChat: (serverId: string) => Promise<
+    | ReadonlyArray<{
+        readonly steamId: string;
+        readonly name: string;
+        readonly text: string;
+        readonly time: number;
+      }>
+    | undefined
+  >;
+  /** Sent with the bot prefix, so plugins and the agent ignore it. */
+  readonly sendTeamChat: (serverId: string, line: string) => Promise<void>;
   readonly reply: (id: string) => string | undefined;
   readonly pairing: () => { readonly signedIn: boolean; readonly hostSteamId: string };
   /** Opens Steam sign-in on the host PC; resolves with the signed-in SID64. */

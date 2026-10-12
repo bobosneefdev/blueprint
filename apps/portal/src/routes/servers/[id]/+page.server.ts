@@ -1,11 +1,15 @@
 import { bot } from "#lib/server/bot.ts";
 
-export const load = ({ params }) => {
-  const w = bot()
-    .servers()
-    .find((x) => x.id === params.id)?.world;
+export const load = ({ params, locals }) => {
+  const b = bot();
+
+  const w = b.servers().find((x) => x.id === params.id)?.world;
 
   return {
+    canChat:
+      locals.sid64 !== undefined &&
+      (locals.sid64 === b.hostSteamId() ||
+        b.settings().roles[params.id]?.[locals.sid64] !== undefined),
     world:
       w === undefined
         ? undefined

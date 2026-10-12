@@ -50,7 +50,8 @@ export type RequestKind =
   | "getMap"
   | "getEntityInfo"
   | "setEntityValue"
-  | "sendTeamMessage";
+  | "sendTeamMessage"
+  | "getTeamChat";
 
 // Decoded protobuf messages. `toObject` with longs-as-strings gives plain JSON-ish data; these
 // shapes mirror proto/rustplus.proto with every field optional.
@@ -107,6 +108,14 @@ export interface AppResponse {
   readonly teamInfo?: AppTeamInfo;
   readonly mapMarkers?: { readonly markers?: ReadonlyArray<AppMarker> };
   readonly entityInfo?: AppEntityInfo;
+  readonly teamChat?: {
+    readonly messages?: ReadonlyArray<{
+      readonly steamId?: string;
+      readonly name?: string;
+      readonly message?: string;
+      readonly time?: number;
+    }>;
+  };
   /** jpgImage is base64 (protobufjs toObject bytes default). */
   readonly map?: {
     readonly width?: number;
@@ -172,6 +181,7 @@ const COST: Record<RequestKind, number> = {
   getEntityInfo: 1,
   setEntityValue: 1,
   sendTeamMessage: 2,
+  getTeamChat: 1,
 };
 
 /** Token bucket: waits until `cost` tokens are available, then spends them. */

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Chat from "./Chat.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -53,4 +54,8 @@
       {/if}
     </div>
   </div>
+{/if}
+
+{#if data.canChat && data.world !== undefined}
+  <Chat id={data.id} />
 {/if}

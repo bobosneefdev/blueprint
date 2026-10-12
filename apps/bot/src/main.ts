@@ -135,6 +135,16 @@ const mapCache = new Map<string, Promise<{ jpg: Uint8Array; oceanMargin: number 
 
 const chatSinks = new Map<string, (line: string) => Promise<void>>();
 
+type ChatLine = { steamId: string; name: string; text: string; time: number };
+
+const chatFetchers = new Map<string, () => Promise<ReadonlyArray<ChatLine>>>();
+
+/** One getTeamChat per server per 2s, however many portal tabs poll. */
+const chatCache = new Map<
+  string,
+  { at: number; p: Promise<ReadonlyArray<ChatLine> | undefined> }
+>();
+
 const replies = new Map<string, string>();
 
 type Activity = { at: number; server: string; plugin: string; message: string };
@@ -216,6 +226,24 @@ attach({
     void p.then((m) => m === undefined && mapCache.delete(id));
 
     return p;
+  },
+  teamChat: (id) => {
+    const hit = chatCache.get(id);
+
+    if (hit && Date.now() - hit.at < 2000) return hit.p;
+
+    const p =
+      chatFetchers
+        .get(id)?.()
+        .catch(() => undefined) ?? Promise.resolve(undefined);
+
+    chatCache.set(id, { at: Date.now(), p });
+
+    return p;
+  },
+  sendTeamChat: async (id, line) => {
+    await chatSinks.get(id)?.(line);
+    chatCache.delete(id);
   },
   pairing: () => ({ signedIn: config.rustplus !== undefined, hostSteamId: config.hostSteamId }),
   pair: () => pair(),
@@ -486,6 +514,17 @@ const runServer = (s: Db.ServerRow) =>
           Effect.ignore(
             rp.request("sendTeamMessage", { message: `${BOT_PREFIX}${line}`.slice(0, 128) }),
           ),
+        ),
+      );
+
+      chatFetchers.set(s.id, () =>
+        Effect.runPromise(rp.request("getTeamChat")).then((r) =>
+          (r.teamChat?.messages ?? []).map((m) => ({
+            steamId: m.steamId ?? "",
+            name: m.name ?? "",
+            text: m.message ?? "",
+            time: m.time ?? 0,
+          })),
         ),
       );
 
