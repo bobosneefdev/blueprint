@@ -41,6 +41,8 @@ export const argv = (t: Turn): string[] => {
         "--dangerously-skip-permissions",
         "--append-system-prompt",
         t.systemPrompt,
+        // Game data is local and authoritative; web results are stale or wrong.
+        "--disallowedTools=WebSearch,WebFetch",
         ...model,
         ...effort.flatMap((e) => ["--effort", e]),
         ...(t.fast === true ? ["--settings", '{"fastMode":true}'] : []),
@@ -55,18 +57,23 @@ export const argv = (t: Turn): string[] => {
         "--json",
         "--dangerously-bypass-approvals-and-sandbox",
         "--skip-git-repo-check",
+        "-c",
+        'web_search="disabled"',
         ...(t.model === undefined ? [] : ["-m", t.model]),
         ...effort.flatMap((e) => ["-c", `model_reasoning_effort="${e}"`]),
         ...(t.fast === true ? ["-c", 'service_tier="fast"'] : []),
         t.prompt,
       ];
     case "pi":
+      // Pi has no web tool to switch off.
       return [
         "pi",
         "--mode",
         "json",
         "--append-system-prompt",
         t.systemPrompt,
+        // /workspace/AGENTS.md (for codex) holds the same prompt; don't load it twice.
+        "--no-context-files",
         ...model,
         ...effort.flatMap((e) => ["--thinking", e]),
         ...(t.session === undefined ? [] : ["--session-id", t.session]),

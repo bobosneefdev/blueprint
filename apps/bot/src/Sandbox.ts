@@ -114,6 +114,12 @@ export const mountScript = (share: string, gameData: string) =>
     // Leftover processes from a previous requester's job must not see this job's token.
     "pkill -KILL -u agent 2>/dev/null || true",
     `mountpoint -q /workspace || mount -t drvfs ${q(share)} /workspace -o metadata,uid=1000,gid=1000`,
+    // Skills (caveman, ponytail) land in every harness's user skill dir, root-owned so the agent
+    // can't rewrite them for the next requester. The parents stay agent-owned: harnesses write there.
+    "for d in .agents .claude .codex; do install -d -o agent -g agent /home/agent/$d; " +
+      "rm -rf /home/agent/$d/skills; cp -r /workspace/.skills /home/agent/$d/skills; " +
+      "chown -R root:root /home/agent/$d/skills; chmod -R a+rX,go-w /home/agent/$d/skills; done",
+    "rm -rf /workspace/.skills",
     "rm -rf /data/rust-items-json/data.tmp && mkdir -p /data/rust-items-json/data.tmp",
     `mount -t drvfs ${q(gameData)} /mnt/gamedata -o ro 2>/dev/null || { mkdir -p /mnt/gamedata && mount -t drvfs ${q(gameData)} /mnt/gamedata -o ro; }`,
     "cp -r /mnt/gamedata/. /data/rust-items-json/data.tmp/ && umount /mnt/gamedata",

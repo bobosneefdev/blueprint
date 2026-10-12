@@ -33,6 +33,13 @@ test("resume flags per harness", () => {
   expect(argv({ ...base, kind: "pi" })).toContain("--session-id");
 });
 
+test("web search is off: answers come from the local game data", () => {
+  const base = { prompt: "hi", systemPrompt: "sys", session: undefined, model: undefined };
+
+  expect(argv({ ...base, kind: "claude" })).toContain("--disallowedTools=WebSearch,WebFetch");
+  expect(argv({ ...base, kind: "codex" }).join(" ")).toContain('-c web_search="disabled"');
+});
+
 test("reasoning level and fast mode per harness", () => {
   const base = {
     prompt: "hi",

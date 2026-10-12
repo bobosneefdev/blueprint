@@ -27,6 +27,7 @@ import * as HarnessAuth from "./HarnessAuth.ts";
 import * as Harnesses from "./Harnesses.ts";
 import * as Notify from "./Notify.ts";
 import * as Sandbox from "./Sandbox.ts";
+import * as Skills from "./Skills.ts";
 import * as SteamLogin from "./SteamLogin.ts";
 
 if (process.argv.includes("--self-test")) await (await import("./SelfTest.ts")).run();
@@ -85,7 +86,12 @@ const refreshAgentShare = async () => {
       `${JSON.stringify(l.plugin, null, 2)}\n`,
     );
 
-  await Bun.write(join(agentShare, "AGENTS.md"), "Draft plugins in plugins/. Use the bot CLI.\n");
+  // Copied by root to the agent's home skill dirs (Sandbox.mountScript), then removed.
+  for (const [name, body] of Object.entries(Skills))
+    await Bun.write(join(agentShare, ".skills", name, "SKILL.md"), body);
+
+  // Codex has no system-prompt flag: this file is how it gets the instructions.
+  await Bun.write(join(agentShare, "AGENTS.md"), Agent.systemPrompt(agentSettings()));
 };
 
 const prepareSandbox = async () => {
@@ -402,13 +408,17 @@ function rebindRpc() {
 }
 
 // ── Agent ────────────────────────────────────────────────────────────────────────────────────────
-const runAgent = AgentRunner.make({
-  settings: () => ({
+function agentSettings(): Agent.Settings {
+  return {
     name: config.botName,
     hostSteamId: config.hostSteamId,
     roles: roles(),
     portalUrl: publicUrl,
-  }),
+  };
+}
+
+const runAgent = AgentRunner.make({
+  settings: agentSettings,
   harness: () => ({
     kind: config.harness,
     model: config.model,

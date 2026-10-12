@@ -13,4 +13,5 @@ test("mounts only the share dir; copies game data; never mounts a whole drive", 
   expect(s).toContain("cp -r /mnt/gamedata/. /data/rust-items-json/data.tmp/");
   expect(s).toContain("pkill -KILL -u agent");
   expect(s).not.toMatch(/drvfs [A-Z]: /);
+  expect(s).toContain("chown -R root:root /home/agent/$d/skills");
 });
